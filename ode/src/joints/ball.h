@@ -31,20 +31,18 @@ struct dxJointBall : public dxJoint
 {
     dVector3 anchor1;   // anchor w.r.t first body
     dVector3 anchor2;   // anchor w.r.t second body
-    dReal erp;          // error reduction
-    dReal cfm;          // constraint force mix in
+    // erp and cfm moved to joint.h by OSRF
+    // dReal erp;          // error reduction
+    // dReal cfm;          // constraint force mix in
     void set( int num, dReal value );
     dReal get( int num );
 
     dxJointBall( dxWorld *w );
     virtual void getSureMaxInfo( SureMaxInfo* info );
     virtual void getInfo1( Info1* info );
-    virtual void getInfo2( dReal worldFPS, dReal worldERP, 
-        int rowskip, dReal *J1, dReal *J2,
-        int pairskip, dReal *pairRhsCfm, dReal *pairLoHi, 
-        int *findex );
+    virtual void getInfo2( Info2* info );
     virtual dJointType type() const;
-    virtual sizeint size() const;
+    virtual size_t size() const;
 
     virtual void setRelativeValues();
 };

@@ -38,15 +38,11 @@
 using namespace Opcode;
 
 
-static OPCODE_AbortHandler g_fnAbortHandler = NULL;
-
-
-bool Opcode::InitOpcode(OPCODE_AbortHandler fnAbortHandler/*=NULL*/)
+bool Opcode::InitOpcode()
 {
 	//Log("// Initializing OPCODE\n\n");
 //	LogAPIInfo();
-
-	g_fnAbortHandler = fnAbortHandler;
+	
 	return true;
 }
 
@@ -69,14 +65,3 @@ void ModuleDetach()
 }
 
 #endif
-
-/*extern */
-void OPCODE_NORETURN IceAbort()
-{
-	if (g_fnAbortHandler != NULL)
-	{
-		g_fnAbortHandler();
-	}
-
-	abort();
-}

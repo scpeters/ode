@@ -26,8 +26,6 @@
 
 using namespace IceCore;
 
-#define MAX_RESERVE_GROWTH_SIZE		65536U
-
 // Static members
 #ifdef CONTAINER_STATS
 udword Container::mNbContainers = 0;
@@ -39,7 +37,7 @@ udword Container::mUsedRam = 0;
  *	Constructor. No entries allocated there.
  */
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-Container::Container() : mMaxNbEntries(0), mCurNbEntries(0), mEntries(null), mGrowthFactor(2)
+Container::Container() : mMaxNbEntries(0), mCurNbEntries(0), mEntries(null), mGrowthFactor(2.0f)
 {
 #ifdef CONTAINER_STATS
 	mNbContainers++;
@@ -66,7 +64,7 @@ Container::Container(udword size, float growth_factor) : mMaxNbEntries(0), mCurN
  *	Copy constructor.
  */
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-Container::Container(const Container& object) : mMaxNbEntries(0), mCurNbEntries(0), mEntries(null), mGrowthFactor(2)
+Container::Container(const Container& object) : mMaxNbEntries(0), mCurNbEntries(0), mEntries(null), mGrowthFactor(2.0f)
 {
 #ifdef CONTAINER_STATS
 	mNbContainers++;
@@ -120,22 +118,18 @@ bool Container::Resize(udword needed)
 	mUsedRam-=mMaxNbEntries*sizeof(udword);
 #endif
 
-	if (MAX_UDWORD - mCurNbEntries < needed)
-	{
-		CHECKALLOC(null);
-	}
-
 	// Get more entries
-	udword NewMaxNbEntries = mMaxNbEntries ? udword(mMaxNbEntries * mGrowthFactor) : 2;	// Default nb Entries = 2
-	
-	if (NewMaxNbEntries <= mMaxNbEntries) NewMaxNbEntries = MAX_UDWORD - mMaxNbEntries < MAX_RESERVE_GROWTH_SIZE ? MAX_UDWORD : mMaxNbEntries + MAX_RESERVE_GROWTH_SIZE;
-	else if (NewMaxNbEntries - mMaxNbEntries > MAX_RESERVE_GROWTH_SIZE) NewMaxNbEntries = mMaxNbEntries + MAX_RESERVE_GROWTH_SIZE;	
-	
-	if (NewMaxNbEntries < mCurNbEntries + needed) NewMaxNbEntries = mCurNbEntries + needed;
+	mMaxNbEntries = mMaxNbEntries ? udword(float(mMaxNbEntries)*mGrowthFactor) : 2;	// Default nb Entries = 2
+	if(mMaxNbEntries<mCurNbEntries + needed)	mMaxNbEntries = mCurNbEntries + needed;
 
 	// Get some bytes for new entries
-	udword*	NewEntries = new udword[NewMaxNbEntries];
+	udword*	NewEntries = new udword[mMaxNbEntries];
 	CHECKALLOC(NewEntries);
+
+#ifdef CONTAINER_STATS
+	// Add current amount of bytes
+	mUsedRam+=mMaxNbEntries*sizeof(udword);
+#endif
 
 	// Copy old data if needed
 	if(mCurNbEntries)	CopyMemory(NewEntries, mEntries, mCurNbEntries*sizeof(udword));
@@ -145,12 +139,6 @@ bool Container::Resize(udword needed)
 
 	// Assign new pointer
 	mEntries = NewEntries;
-	mMaxNbEntries = NewMaxNbEntries;
-
-#ifdef CONTAINER_STATS
-	// Add current amount of bytes
-	mUsedRam+=mMaxNbEntries*sizeof(udword);
-#endif
 
 	return true;
 }

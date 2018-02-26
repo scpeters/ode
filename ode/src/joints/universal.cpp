@@ -21,7 +21,7 @@
  *************************************************************************/
 
 
-#include <ode/odeconfig.h>
+#include <ode/misc.h>
 #include "config.h"
 #include "universal.h"
 #include "joint_internal.h"
@@ -37,7 +37,7 @@
 // implementation (or, less likely, the hinge2 implementation).
 
 dxJointUniversal::dxJointUniversal( dxWorld *w ) :
-    dxJoint( w )
+        dxJoint( w )
 {
     dSetZero( anchor1, 4 );
     dSetZero( anchor2, 4 );
@@ -49,6 +49,8 @@ dxJointUniversal::dxJointUniversal( dxWorld *w ) :
     dSetZero( qrel2, 4 );
     limot1.init( world );
     limot2.init( world );
+    cumulative_angle1 = 0.0;
+    cumulative_angle2 = 0.0;
 }
 
 
@@ -258,7 +260,7 @@ dxJointUniversal::getAngle2()
 void 
 dxJointUniversal::getSureMaxInfo( SureMaxInfo* info )
 {
-    info->max_m = 6;
+  info->max_m = 6;
 }
 
 
@@ -268,10 +270,14 @@ dxJointUniversal::getInfo1( dxJoint::Info1 *info )
     info->nub = 4;
     info->m = 4;
 
-    bool limiting1 = ( limot1.lostop >= -M_PI || limot1.histop <= M_PI ) &&
-        limot1.lostop <= limot1.histop;
-    bool limiting2 = ( limot2.lostop >= -M_PI || limot2.histop <= M_PI ) &&
-        limot2.lostop <= limot2.histop;
+    // flags to skip joint limits if limtis are out side of [-M_PI, +M_PI]
+    // bool limiting1 = ( limot1.lostop >= -M_PI || limot1.histop <= M_PI ) &&
+    //                  limot1.lostop <= limot1.histop;
+    // bool limiting2 = ( limot2.lostop >= -M_PI || limot2.histop <= M_PI ) &&
+    //                  limot2.lostop <= limot2.histop;
+    // we don't need them if using cumulative_angle
+    bool limiting1 = limot1.lostop <= limot1.histop;
+    bool limiting2 = limot2.lostop <= limot2.histop;
 
     // We need to call testRotationLimit() even if we're motored, since it
     // records the result.
@@ -282,10 +288,18 @@ dxJointUniversal::getInfo1( dxJoint::Info1 *info )
     {
         dReal angle1, angle2;
         getAngles( &angle1, &angle2 );
+
+        // From angle, update cumulative_angle, which does not wrap.
+        // Assume this is called only once per time step.
+        cumulative_angle1 =
+          dShortestAngularDistanceUpdate(cumulative_angle1, angle1);
+        cumulative_angle2 =
+          dShortestAngularDistanceUpdate(cumulative_angle2, angle2);
+
         if ( limiting1 )
-            limot1.testRotationalLimit( angle1 );
+            limot1.testRotationalLimit( cumulative_angle1 );
         if ( limiting2 )
-            limot2.testRotationalLimit( angle2 );
+            limot2.testRotationalLimit( cumulative_angle2 );
     }
 
     if ( limot1.limit || limot1.fmax > 0 ) info->m++;
@@ -294,13 +308,23 @@ dxJointUniversal::getInfo1( dxJoint::Info1 *info )
 
 
 void
-dxJointUniversal::getInfo2( dReal worldFPS, dReal worldERP, 
-    int rowskip, dReal *J1, dReal *J2,
-    int pairskip, dReal *pairRhsCfm, dReal *pairLoHi, 
-    int *findex )
+dxJointUniversal::getInfo2( dxJoint::Info2 *info )
 {
+    // Added by OSRF
+    // If joint values of erp and cfm are negative, then ignore them.
+    // info->erp, info->cfm already have the global values from quickstep
+    if (this->erp >= 0)
+      info->erp = erp;
+    if (this->cfm >= 0)
+    {
+      info->cfm[0] = cfm;
+      info->cfm[1] = cfm;
+      info->cfm[2] = cfm;
+      info->cfm[3] = cfm;
+    }
+
     // set the three ball-and-socket rows
-    setBall( this, worldFPS, worldERP, rowskip, J1, J2, pairskip, pairRhsCfm, anchor1, anchor2 );
+    setBall( this, info, anchor1, anchor2 );
 
     // set the universal joint row. the angular velocity about an axis
     // perpendicular to both joint axes should be equal. thus the constraint
@@ -311,30 +335,34 @@ dxJointUniversal::getInfo2( dReal worldFPS, dReal worldERP,
 
     // length 1 joint axis in global coordinates, from each body
     dVector3 ax1, ax2;
+    dVector3 ax2_temp;
     // length 1 vector perpendicular to ax1 and ax2. Neither body can rotate
     // about this.
     dVector3 p;
-    
+    dReal k;
+
     // Since axis1 and axis2 may not be perpendicular
     // we find a axis2_tmp which is really perpendicular to axis1
     // and in the plane of axis1 and axis2
     getAxes( ax1, ax2 );
-
-    dReal k = dCalcVectorDot3( ax1, ax2 );
-
-    dVector3 ax2_temp;
-    dAddVectorScaledVector3(ax2_temp, ax2, ax1, -k);
+    k = dCalcVectorDot3( ax1, ax2 );
+    ax2_temp[0] = ax2[0] - k * ax1[0];
+    ax2_temp[1] = ax2[1] - k * ax1[1];
+    ax2_temp[2] = ax2[2] - k * ax1[2];
     dCalcVectorCross3( p, ax1, ax2_temp );
     dNormalize3( p );
 
-    int currRowSkip = 3 * rowskip;
-    {
-        dCopyVector3( J1 + currRowSkip + GI2__JA_MIN, p);
+    int s3 = 3 * info->rowskip;
 
-        if ( node[1].body )
-        {
-            dCopyNegatedVector3( J2 + currRowSkip + GI2__JA_MIN, p);
-        }
+    info->J1a[s3+0] = p[0];
+    info->J1a[s3+1] = p[1];
+    info->J1a[s3+2] = p[2];
+
+    if ( node[1].body )
+    {
+        info->J2a[s3+0] = -p[0];
+        info->J2a[s3+1] = -p[1];
+        info->J2a[s3+2] = -p[2];
     }
 
     // compute the right hand side of the constraint equation. set relative
@@ -351,21 +379,13 @@ dxJointUniversal::getInfo2( dReal worldFPS, dReal worldERP,
     // theta - Pi/2 ~= cos(theta), so
     //    |angular_velocity|  ~= (erp*fps) * (ax1 dot ax2)
 
-    int currPairSkip = 3 * pairskip;
-    {
-        pairRhsCfm[currPairSkip + GI2_RHS] = worldFPS * worldERP * (-k);
-    }
-
-    currRowSkip += rowskip; currPairSkip += pairskip;
+    info->c[3] = info->fps * info->erp * - k;
 
     // if the first angle is powered, or has joint limits, add in the stuff
-    if (limot1.addLimot( this, worldFPS, J1 + currRowSkip, J2 + currRowSkip, pairRhsCfm + currPairSkip, pairLoHi + currPairSkip, ax1, 1 ))
-    {
-        currRowSkip += rowskip; currPairSkip += pairskip;
-    }
+    int row = 4 + limot1.addLimot( this, info, 4, ax1, 1 );
 
     // if the second angle is powered, or has joint limits, add in more stuff
-    limot2.addLimot( this, worldFPS, J1 + currRowSkip, J2 + currRowSkip, pairRhsCfm + currPairSkip, pairLoHi + currPairSkip, ax2, 1 );
+    limot2.addLimot( this, info, row, ax2, 1 );
 }
 
 
@@ -424,7 +444,7 @@ void dJointSetUniversalAxis1( dJointID j, dReal x, dReal y, dReal z )
 }
 
 void dJointSetUniversalAxis1Offset( dJointID j, dReal x, dReal y, dReal z,
-                                   dReal offset1, dReal offset2 )
+                                    dReal offset1, dReal offset2 )
 {
     dxJointUniversal* joint = ( dxJointUniversal* )j;
     dUASSERT( joint, "bad joint argument" );
@@ -499,7 +519,7 @@ void dJointSetUniversalAxis2( dJointID j, dReal x, dReal y, dReal z )
 }
 
 void dJointSetUniversalAxis2Offset( dJointID j, dReal x, dReal y, dReal z,
-                                   dReal offset1, dReal offset2 )
+                                    dReal offset1, dReal offset2 )
 {
     dxJointUniversal* joint = ( dxJointUniversal* )j;
     dUASSERT( joint, "bad joint argument" );
@@ -627,7 +647,20 @@ void dJointSetUniversalParam( dJointID j, int parameter, dReal value )
     }
     else
     {
-        joint->limot1.set( parameter, value );
+      switch (parameter)
+      {
+        case dParamERP:
+          joint->erp = value;
+          break;
+        case dParamCFM:
+          joint->cfm = value;
+          // dParamCFM label is also used for normal_cfm
+          joint->limot1.set( parameter, value );
+          break;
+        default:
+          joint->limot1.set( parameter, value );
+          break;
+      }
     }
 }
 
@@ -643,7 +676,15 @@ dReal dJointGetUniversalParam( dJointID j, int parameter )
     }
     else
     {
-        return joint->limot1.get( parameter );
+      switch (parameter)
+      {
+        case dParamERP:
+          return joint->erp;
+        case dParamCFM:
+          return joint->cfm;
+        default:
+          return joint->limot1.get( parameter );
+      }
     }
 }
 
@@ -652,14 +693,22 @@ void dJointGetUniversalAngles( dJointID j, dReal *angle1, dReal *angle2 )
     dxJointUniversal* joint = ( dxJointUniversal* )j;
     dUASSERT( joint, "bad joint argument" );
     checktype( joint, Universal );
+
+    dReal tmp_angle1, tmp_angle2;
+    joint->getAngles( &tmp_angle2, &tmp_angle1 );
+
     if ( joint->flags & dJOINT_REVERSE )
     {
-        joint->getAngles( angle2, angle1 );
-        *angle2 = -(*angle2);
-        return;
+      tmp_angle2 = -(tmp_angle2);
     }
-    else
-        return joint->getAngles( angle1, angle2 );
+
+    // Do not overwrite cumulative_angle1 and
+    // cumulative_angle2 by updated joint angle.
+    // Simply calculate the current angles and return them.
+    *angle1 = 
+      dShortestAngularDistanceUpdate(joint->cumulative_angle1, tmp_angle1);
+    *angle2 = 
+      dShortestAngularDistanceUpdate(joint->cumulative_angle2, tmp_angle2);
 }
 
 
@@ -668,10 +717,25 @@ dReal dJointGetUniversalAngle1( dJointID j )
     dxJointUniversal* joint = ( dxJointUniversal* )j;
     dUASSERT( joint, "bad joint argument" );
     checktype( joint, Universal );
+
+    // Do not overwrite cumulative_angle1 and
+    // cumulative_angle2 by updated joint angle.
+    // Simply calculate the current angles and return them.
+    dReal tmp_angle;
+    dReal tmp_cumulative_angle;
+
     if ( joint->flags & dJOINT_REVERSE )
-        return joint->getAngle2();
+    {
+        tmp_angle = joint->getAngle2();
+        tmp_cumulative_angle = joint->cumulative_angle2;
+    }
     else
-        return joint->getAngle1();
+    {
+        tmp_angle = joint->getAngle1();
+        tmp_cumulative_angle = joint->cumulative_angle1;
+    }
+
+    return dShortestAngularDistanceUpdate(tmp_cumulative_angle, tmp_angle);
 }
 
 
@@ -680,10 +744,25 @@ dReal dJointGetUniversalAngle2( dJointID j )
     dxJointUniversal* joint = ( dxJointUniversal* )j;
     dUASSERT( joint, "bad joint argument" );
     checktype( joint, Universal );
+
+    // Do not overwrite cumulative_angle1 and
+    // cumulative_angle2 by updated joint angle.
+    // Simply calculate the current angles and return them.
+    dReal tmp_angle;
+    dReal tmp_cumulative_angle;
+
     if ( joint->flags & dJOINT_REVERSE )
-        return -joint->getAngle1();
+    {
+        tmp_angle = -joint->getAngle1();
+        tmp_cumulative_angle = -joint->cumulative_angle1;
+    }
     else
-        return joint->getAngle2();
+    {
+        tmp_angle = joint->getAngle2();
+        tmp_cumulative_angle = joint->cumulative_angle2;
+    }
+
+    return dShortestAngularDistanceUpdate(tmp_cumulative_angle, tmp_angle);
 }
 
 
@@ -768,7 +847,7 @@ dxJointUniversal::type() const
 }
 
 
-sizeint
+size_t
 dxJointUniversal::size() const
 {
     return sizeof( *this );

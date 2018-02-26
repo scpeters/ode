@@ -93,14 +93,12 @@
  *	only.
  */
 
-#include <ou/features.h>
-
-
-#if _OU_FEATURE_SET >= _OU_FEATURE_SET_ATOMICS
 
 #include <ou/inttypes.h>
 #include <ou/namespace.h>
 #include <ou/platform.h>
+
+#include <ou/ou_dll.h>
 
 
 /**
@@ -140,7 +138,7 @@
  *	\fn atomicord32 _OU_CONVENTION_API AtomicIncrement(volatile atomicord32 *paoDestination)
  *	\brief Increments the destination and returns its new value.
  *	\param paoDestination A pointer to a variable to be incremented.
- *	\return A value of variable pointed to by \a paoDestination after the increment.
+ *	\return A value of variable pointer to by \a paoDestination after the increment.
  *
  *	The function implements functionality of \c InterlockedIncrement from Win32 API.
  *	It is most commonly used for reference counting.
@@ -151,7 +149,7 @@
  *	\fn atomicord32 _OU_CONVENTION_API AtomicDecrement(volatile atomicord32 *paoDestination)
  *	\brief Decrements the destination and returns its new value.
  *	\param paoDestination A pointer to a variable to be decremented.
- *	\return A value of variable pointed to by \a paoDestination after the decrement.
+ *	\return A value of variable pointer to by \a paoDestination after the decrement.
  *
  *	The function implements functionality of \c InterlockedDecrement from Win32 API.
  *	It is most commonly used for reference counting.
@@ -159,24 +157,14 @@
  */
 
 /**
- *	\fn void _OU_CONVENTION_API AtomicStore(volatile atomicord32 *paoDestination, atomicord32 aoValue)
- *	\brief Stores the value in destination.
- *	\param paoDestination A pointer to a variable the data is to be stored in.
- *	\param aoValue A value to be stored. 
- *
- *	The function performs atomic store of \a aoValue value in the memory location 
- *	pointed to by \a paoDestination.
- */
-
-/**
  *	\fn atomicord32 _OU_CONVENTION_API AtomicExchange(volatile atomicord32 *paoDestination, atomicord32 aoExchange)
  *	\brief Stores new value in destination and returns old value of destination.
  *	\param paoDestination A pointer to a variable the data is to be exchanged with.
  *	\param aoExchange A value to be used for exchange. 
- *	\return Previous value of variable pointed to by \a paoDestination.
+ *	\return Previous value of variable pointer to by \a paoDestination.
  *
  *	The function performs atomic exchange of \a aoExchange value with memory location 
- *	pointed to by \a paoDestination. Most common uses are relaxed synchronization
+ *	pointer to by \a paoDestination. Most common uses are relaxed synchronization
  *	and shared value extraction.
  *	\see AtomicCompareExchange
  */
@@ -187,9 +175,9 @@
  *	and returns original value of destination.
  *	\param paoDestination A pointer to a variable the value is to be added to.
  *	\param aoAddend An addend to be used in operation.
- *	\return Original value of variable pointed to by \a paoDestination.
+ *	\return Original value of variable pointer to by \a paoDestination.
  *
- *	The function computes sum of \a aoAddend and location pointed to by \a paoDestination
+ *	The function computes sum of \a aoAddend and location pointer to by \a paoDestination
  *	stores it in the location and returns original value instead. The function is 
  *	close to both exchange and increment groups by semantics but it has been
  *	put into exchange group because it returns original value of the destination.
@@ -226,7 +214,7 @@
  *
  *	\c AtomicAnd updates variable pointed to by \a paoDestination with result of
  *	 bitwise AND of \a aoBitMask and existing \a paoDestination target. The result 
- *	is original value that was pointed to by \a paoDestination before the operation
+ *	is original value that was pointer to by \a paoDestination before the operation
  *	was performed. Common applications are object state manipulations.
  *	\see AtomicOr
  *	\see AtomicXor
@@ -242,7 +230,7 @@
  *
  *	\c AtomicOr updates variable pointed to by \a paoDestination with result of
  *	 bitwise OR of \a aoBitMask and existing \a paoDestination target. The result 
- *	is original value that was pointed to by \a paoDestination before the operation 
+ *	is original value that was pointer to by \a paoDestination before the operation 
  *	was performed. Common applications are object state manipulations.
  *	\see AtomicAnd
  *	\see AtomicXor
@@ -258,17 +246,10 @@
  *
  *	\c AtomicXor updates variable pointed to by \a paoDestination with result of
  *	 bitwise XOR of \a aoBitMask and existing \a paoDestination target. The result 
- *	is original value that was pointed to by \a paoDestination before the operation 
+ *	is original value that was pointer to by \a paoDestination before the operation 
  *	was performed. Common applications are object state manipulations.
  *	\see AtomicAnd
  *	\see AtomicOr
- */
-
-/**
- *	\fn void _OU_CONVENTION_API AtomicStorePointer(volatile atomicptr *papDestination, atomicptr apValue)
- *	\brief The function is identical to \c AtomicStore except that it operates
- *	with pointers rather than 32-bit integers.
- *	\see AtomicStore
  */
 
 /**
@@ -346,13 +327,6 @@
  */
 
 /**
- *	\fn void _OU_CONVENTION_API AtomicReadReorderBarrier()
- *	\brief The function prevents both the compiler and the processor architecture
- *  from reordering memory read operations across the barrier call.
- */
-
-
-/**
  *	\fn bool _OU_CONVENTION_API InitializeAtomicAPI()
  *	\brief Performs initialization tasks to allow using atomic functions.
  *	\return Boolean initialization status.
@@ -383,7 +357,7 @@
  */
 
 
-BEGIN_NAMESPACE_OU();
+BEGIN_NAMESPACE_OU()
 
 
 //////////////////////////////////////////////////////////////////////////
@@ -392,17 +366,17 @@ BEGIN_NAMESPACE_OU();
 #if _OU_TARGET_OS == _OU_TARGET_OS_WINDOWS
 
 
-END_NAMESPACE_OU();
+END_NAMESPACE_OU()
 
 
 #include <windows.h>
 #include <stddef.h>
 
 
-BEGIN_NAMESPACE_OU();
+BEGIN_NAMESPACE_OU()
 
 
-typedef ULONG atomicord32;
+typedef LONG atomicord32;
 typedef PVOID atomicptr;
 
 
@@ -426,11 +400,11 @@ typedef PVOID atomicptr;
 
 #else // other compilers
 
-#define __ou_intlck_value_t LONG
-#define __ou_intlck_target_t volatile LONG *
+#define __ou_intlck_value_t atomicord32
+#define __ou_intlck_target_t volatile atomicord32 *
 #define __ou_xchgadd_target_t LPLONG
-#define __ou_cmpxchg_value_t LONG
-#define __ou_cmpxchg_target_t volatile LONG *
+#define __ou_cmpxchg_value_t atomicord32
+#define __ou_cmpxchg_target_t volatile atomicord32 *
 
 
 #endif // #if _OU_COMPILER == _OU_COMPILER_GCC
@@ -438,32 +412,32 @@ typedef PVOID atomicptr;
 
 #define __OU_ATOMIC_ORD32_FUNCTIONS_DEFINED
 
-static _OU_ALWAYSINLINE atomicord32 _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE atomicord32 _OU_ALWAYSINLINE_IN _OU_CONVENTION_API
 /*atomicord32 */AtomicIncrement(volatile atomicord32 *paoDestination)
 {
 	return ::InterlockedIncrement((__ou_intlck_target_t)paoDestination);
 }
 
-static _OU_ALWAYSINLINE atomicord32 _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE atomicord32 _OU_ALWAYSINLINE_IN _OU_CONVENTION_API
 /*atomicord32 */AtomicDecrement(volatile atomicord32 *paoDestination)
 {
 	return ::InterlockedDecrement((__ou_intlck_target_t)paoDestination);
 }
 
 
-static _OU_ALWAYSINLINE atomicord32 _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE atomicord32 _OU_ALWAYSINLINE_IN _OU_CONVENTION_API
 /*atomicord32 */AtomicExchange(volatile atomicord32 *paoDestination, atomicord32 aoExchange)
 {
 	return ::InterlockedExchange((__ou_intlck_target_t)paoDestination, aoExchange);
 }
 
-static _OU_ALWAYSINLINE atomicord32 _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE atomicord32 _OU_ALWAYSINLINE_IN _OU_CONVENTION_API
 /*atomicord32 */AtomicExchangeAdd(volatile atomicord32 *paoDestination, atomicord32 aoAddend)
 {
 	return ::InterlockedExchangeAdd((__ou_xchgadd_target_t)paoDestination, aoAddend);
 }
 
-static _OU_ALWAYSINLINE bool _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE bool _OU_ALWAYSINLINE_IN _OU_CONVENTION_API
 /*bool */AtomicCompareExchange(volatile atomicord32 *paoDestination, atomicord32 aoComparand, atomicord32 aoExchange)
 {
 	return (aoComparand == (atomicord32)::InterlockedCompareExchange((__ou_cmpxchg_target_t)paoDestination, (__ou_cmpxchg_value_t)aoExchange, (__ou_cmpxchg_value_t)aoComparand));
@@ -472,7 +446,7 @@ static _OU_ALWAYSINLINE bool _OU_CONVENTION_API
 
 #define __OU_ATOMIC_BIT_FUNCTIONS_DEFINED
 
-static _OU_ALWAYSINLINE atomicord32 _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE atomicord32 _OU_ALWAYSINLINE_IN _OU_CONVENTION_API
 /*atomicord32 */AtomicAnd(volatile atomicord32 *paoDestination, atomicord32 aoBitMask)
 {
 	atomicord32 aoOldValue = *paoDestination;
@@ -492,7 +466,7 @@ static _OU_ALWAYSINLINE atomicord32 _OU_CONVENTION_API
     return aoOldValue;
 }
 
-static _OU_ALWAYSINLINE atomicord32 _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE atomicord32 _OU_ALWAYSINLINE_IN _OU_CONVENTION_API
 /*atomicord32 */AtomicOr(volatile atomicord32 *paoDestination, atomicord32 aoBitMask)
 {
 	atomicord32 aoOldValue = *paoDestination;
@@ -512,7 +486,7 @@ static _OU_ALWAYSINLINE atomicord32 _OU_CONVENTION_API
     return aoOldValue;
 }
 
-static _OU_ALWAYSINLINE atomicord32 _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE atomicord32 _OU_ALWAYSINLINE_IN _OU_CONVENTION_API
 /*atomicord32 */AtomicXor(volatile atomicord32 *paoDestination, atomicord32 aoBitMask)
 {
 	atomicord32 aoOldValue = *paoDestination;
@@ -535,7 +509,7 @@ static _OU_ALWAYSINLINE atomicord32 _OU_CONVENTION_API
 
 #define __OU_ATOMIC_PTR_FUNCTIONS_DEFINED
 
-static _OU_ALWAYSINLINE atomicptr _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE atomicptr _OU_ALWAYSINLINE_IN _OU_CONVENTION_API
 /*atomicptr */AtomicExchangePointer(volatile atomicptr *papDestination, atomicptr apExchange)
 {
 #if _OU_TARGET_BITS == _OU_TARGET_BITS_32
@@ -551,7 +525,7 @@ static _OU_ALWAYSINLINE atomicptr _OU_CONVENTION_API
 #endif // #if _OU_TARGET_BITS == ...
 }
 
-static _OU_ALWAYSINLINE bool _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE bool _OU_ALWAYSINLINE_IN _OU_CONVENTION_API
 /*bool */AtomicCompareExchangePointer(volatile atomicptr *papDestination, atomicptr apComparand, atomicptr apExchange)
 {
 #if _OU_TARGET_BITS == _OU_TARGET_BITS_32
@@ -566,27 +540,6 @@ static _OU_ALWAYSINLINE bool _OU_CONVENTION_API
 	
 #endif // #if !defined(__OU_ATOMIC_WINDOWS_OLD_STYLE_PARAMS)
 }
-
-
-#if _OU_COMPILER == _OU_COMPILER_MSVC
- 
-#if (_OU_TARGET_ARCH == _OU_TARGET_ARCH_X86 || _OU_TARGET_ARCH == _OU_TARGET_ARCH_X64)
-
-#define __OU_ATOMIC_READREORDERBARRIER_FUNCTION_DEFINED
-
-#include <intrin.h>
-
-static _OU_ALWAYSINLINE void _OU_CONVENTION_API 
-/*void */AtomicReadReorderBarrier()
-{
-    _ReadBarrier();  
-}
-
-
-#endif // #if (_OU_TARGET_ARCH == _OU_TARGET_ARCH_X86 || _OU_TARGET_ARCH == _OU_TARGET_ARCH_X64)
-
-
-#endif // #if _OU_COMPILER == _OU_COMPILER_MSVC
 
 
 #undef __ou_intlck_value_t
@@ -604,14 +557,14 @@ static _OU_ALWAYSINLINE void _OU_CONVENTION_API
 
 #if _OU_TARGET_OS == _OU_TARGET_OS_QNX
 
-END_NAMESPACE_OU();
+END_NAMESPACE_OU()
 
 
 #include <atomic.h>
 #include _NTO_CPU_HDR_(smpxchg.h)
 
 
-BEGIN_NAMESPACE_OU();
+BEGIN_NAMESPACE_OU()
 
 typedef unsigned int atomicord32;
 typedef void *atomicptr;
@@ -619,32 +572,32 @@ typedef void *atomicptr;
 
 #define __OU_ATOMIC_ORD32_FUNCTIONS_DEFINED
 
-static _OU_ALWAYSINLINE atomicord32 _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE atomicord32 _OU_ALWAYSINLINE_IN _OU_CONVENTION_API
 /*atomicord32 */AtomicIncrement(volatile atomicord32 *paoDestination)
 {
 	return (atomic_add_value(paoDestination, 1U) + 1U);
 }
 
-static _OU_ALWAYSINLINE atomicord32 _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE atomicord32 _OU_ALWAYSINLINE_IN _OU_CONVENTION_API
 /*atomicord32 */AtomicDecrement(volatile atomicord32 *paoDestination)
 {
 	return (atomic_sub_value(paoDestination, 1U) - 1U);
 }
 
 
-static _OU_ALWAYSINLINE atomicord32 _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE atomicord32 _OU_ALWAYSINLINE_IN _OU_CONVENTION_API
 /*atomicord32 */AtomicExchange(volatile atomicord32 *paoDestination, atomicord32 aoExchange)
 {
 	return _smp_xchg(paoDestination, aoExchange);
 }
 
-static _OU_ALWAYSINLINE atomicord32 _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE atomicord32 _OU_ALWAYSINLINE_IN _OU_CONVENTION_API
 /*atomicord32 */AtomicExchangeAdd(volatile atomicord32 *paoDestination, atomicord32 aoAddend)
 {
 	return atomic_add_value(paoDestination, aoAddend);
 }
 
-static _OU_ALWAYSINLINE bool _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE bool _OU_ALWAYSINLINE_IN _OU_CONVENTION_API
 /*bool */AtomicCompareExchange(volatile atomicord32 *paoDestination, atomicord32 aoComparand, atomicord32 aoExchange)
 {
 	return (aoComparand == (atomicord32)_smp_cmpxchg(paoDestination, aoComparand, aoExchange));
@@ -653,19 +606,19 @@ static _OU_ALWAYSINLINE bool _OU_CONVENTION_API
 
 #define __OU_ATOMIC_BIT_FUNCTIONS_DEFINED
 
-static _OU_ALWAYSINLINE atomicord32 _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE atomicord32 _OU_ALWAYSINLINE_IN _OU_CONVENTION_API
 /*atomicord32 */AtomicAnd(volatile atomicord32 *paoDestination, atomicord32 aoBitMask)
 {
 	return atomic_clr_value(paoDestination, ~aoBitMask);
 }
 
-static _OU_ALWAYSINLINE atomicord32 _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE atomicord32 _OU_ALWAYSINLINE_IN _OU_CONVENTION_API
 /*atomicord32 */AtomicOr(volatile atomicord32 *paoDestination, atomicord32 aoBitMask)
 {
 	return atomic_set_value(paoDestination, aoBitMask);
 }
 
-static _OU_ALWAYSINLINE atomicord32 _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE atomicord32 _OU_ALWAYSINLINE_IN _OU_CONVENTION_API
 /*atomicord32 */AtomicXor(volatile atomicord32 *paoDestination, atomicord32 aoBitMask)
 {
 	return atomic_toggle_value(paoDestination, aoBitMask);
@@ -674,37 +627,37 @@ static _OU_ALWAYSINLINE atomicord32 _OU_CONVENTION_API
 
 #define __OU_ATOMIC_ORD32_NORESULT_FUNCTIONS_DEFINED
 
-static _OU_ALWAYSINLINE void _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE void _OU_ALWAYSINLINE_IN _OU_CONVENTION_API
 /*void */AtomicIncrementNoResult(volatile atomicord32 *paoDestination)
 {
 	atomic_add(paoDestination, 1U);
 }
 
-static _OU_ALWAYSINLINE void _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE void _OU_ALWAYSINLINE_IN _OU_CONVENTION_API
 /*void */AtomicDecrementNoResult(volatile atomicord32 *paoDestination)
 {
 	atomic_sub(paoDestination, 1U);
 }
 
-static _OU_ALWAYSINLINE void _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE void _OU_ALWAYSINLINE_IN _OU_CONVENTION_API
 /*void */AtomicExchangeAddNoResult(volatile atomicord32 *paoDestination, atomicord32 aoAddend)
 {
 	atomic_add(paoDestination, aoAddend);
 }
 
-static _OU_ALWAYSINLINE void _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE void _OU_ALWAYSINLINE_IN _OU_CONVENTION_API
 /*void */AtomicAndNoResult(volatile atomicord32 *paoDestination, atomicord32 aoBitMask)
 {
 	atomic_clr(paoDestination, ~aoBitMask);
 }
 
-static _OU_ALWAYSINLINE void _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE void _OU_ALWAYSINLINE_IN _OU_CONVENTION_API
 /*void */AtomicOrNoResult(volatile atomicord32 *paoDestination, atomicord32 aoBitMask)
 {
 	atomic_set(paoDestination, aoBitMask);
 }
 
-static _OU_ALWAYSINLINE void _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE void _OU_ALWAYSINLINE_IN _OU_CONVENTION_API
 /*void */AtomicXorNoResult(volatile atomicord32 *paoDestination, atomicord32 aoBitMask)
 {
 	atomic_toggle(paoDestination, aoBitMask);
@@ -717,50 +670,46 @@ static _OU_ALWAYSINLINE void _OU_CONVENTION_API
 //////////////////////////////////////////////////////////////////////////
 // Mac implementation
 
-#if _OU_TARGET_OS == _OU_TARGET_OS_MAC || _OU_TARGET_OS == _OU_TARGET_OS_IOS
+#if _OU_TARGET_OS == _OU_TARGET_OS_MAC
 
 #if MAC_OS_X_VERSION >= 1040
 
 
-END_NAMESPACE_OU();
+END_NAMESPACE_OU()
 
 
 #include <libkern/OSAtomic.h>
 
 
-BEGIN_NAMESPACE_OU();
+BEGIN_NAMESPACE_OU()
 
 
-typedef uint32_t atomicord32;
+typedef int32_t atomicord32;
 typedef void *atomicptr;
 
 
-#define __ou_intlck_target_t volatile int32_t *
-#define __ou_xchgadd_target_t volatile int32_t *
-#define __ou_cmpxchg_value_t int32_t
-#define __ou_cmpxchg_target_t volatile int32_t *
 #define __ou_bitmsk_target_t volatile uint32_t *
 
 
 #define __OU_ATOMIC_ORD32_FUNCTIONS_DEFINED
 
-static _OU_ALWAYSINLINE atomicord32 _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE atomicord32 _OU_ALWAYSINLINE_IN _OU_CONVENTION_API
 /*atomicord32 */AtomicIncrement(volatile atomicord32 *paoDestination)
 {
-	return OSAtomicIncrement32Barrier((__ou_intlck_target_t)paoDestination);
+	return OSAtomicIncrement32Barrier(paoDestination);
 }
 
-static _OU_ALWAYSINLINE atomicord32 _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE atomicord32 _OU_ALWAYSINLINE_IN _OU_CONVENTION_API
 /*atomicord32 */AtomicDecrement(volatile atomicord32 *paoDestination)
 {
-	return OSAtomicDecrement32Barrier((__ou_intlck_target_t)paoDestination);
+	return OSAtomicDecrement32Barrier(paoDestination);
 }
 
 
-static _OU_ALWAYSINLINE atomicord32 _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE atomicord32 _OU_ALWAYSINLINE_IN _OU_CONVENTION_API
 /*atomicord32 */AtomicExchange(volatile atomicord32 *paoDestination, atomicord32 aoExchange)
 {
-	__ou_cmpxchg_value_t aoOldValue = *paoDestination;
+	atomicord32 aoOldValue = *paoDestination;
 
 	/*
 	 *	Implementation Note:
@@ -770,8 +719,8 @@ static _OU_ALWAYSINLINE atomicord32 _OU_CONVENTION_API
 	 *	threads will be using this API set for manipulations with paoDestination as well
 	 *	and hence will not issue writes after/without memory barrier.
 	 */
-	for (bool bSwapExecuted = OSAtomicCompareAndSwap32Barrier(aoOldValue, aoExchange, (__ou_cmpxchg_target_t)paoDestination);
-		!bSwapExecuted; bSwapExecuted = OSAtomicCompareAndSwap32(aoOldValue, aoExchange, (__ou_cmpxchg_target_t)paoDestination))
+	for (bool bSwapExecuted = OSAtomicCompareAndSwap32Barrier(aoOldValue, aoExchange, paoDestination);
+		!bSwapExecuted; bSwapExecuted = OSAtomicCompareAndSwap32(aoOldValue, aoExchange, paoDestination))
 	{
 		aoOldValue = *paoDestination;
 	}
@@ -779,16 +728,16 @@ static _OU_ALWAYSINLINE atomicord32 _OU_CONVENTION_API
 	return aoOldValue;
 }
 
-static _OU_ALWAYSINLINE atomicord32 _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE atomicord32 _OU_ALWAYSINLINE_IN _OU_CONVENTION_API
 /*atomicord32 */AtomicExchangeAdd(volatile atomicord32 *paoDestination, atomicord32 aoAddend)
 {
-	return (OSAtomicAdd32Barrier(aoAddend, (__ou_xchgadd_target_t)paoDestination) - aoAddend);
+	return (OSAtomicAdd32Barrier(aoAddend, paoDestination) - aoAddend);
 }
 
-static _OU_ALWAYSINLINE bool _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE bool _OU_ALWAYSINLINE_IN _OU_CONVENTION_API
 /*bool */AtomicCompareExchange(volatile atomicord32 *paoDestination, atomicord32 aoComparand, atomicord32 aoExchange)
 {
-	return OSAtomicCompareAndSwap32Barrier(aoComparand, aoExchange, (__ou_cmpxchg_target_t)paoDestination);
+	return OSAtomicCompareAndSwap32Barrier(aoComparand, aoExchange, paoDestination);
 }
 
 
@@ -796,19 +745,19 @@ static _OU_ALWAYSINLINE bool _OU_CONVENTION_API
 
 #define __OU_ATOMIC_BIT_FUNCTIONS_DEFINED
 
-static _OU_ALWAYSINLINE atomicord32 _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE atomicord32 _OU_ALWAYSINLINE_IN _OU_CONVENTION_API 
 /*atomicord32 */AtomicAnd(volatile atomicord32 *paoDestination, atomicord32 aoBitMask)
 {
 	return OSAtomicAnd32OrigBarrier(aoBitMask, (__ou_bitmsk_target_t)paoDestination);
 }
 
-static _OU_ALWAYSINLINE atomicord32 _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE atomicord32 _OU_ALWAYSINLINE_IN _OU_CONVENTION_API 
 /*atomicord32 */AtomicOr(volatile atomicord32 *paoDestination, atomicord32 aoBitMask)
 {
 	return OSAtomicOr32OrigBarrier(aoBitMask, (__ou_bitmsk_target_t)paoDestination);
 }
 
-static _OU_ALWAYSINLINE atomicord32 _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE atomicord32 _OU_ALWAYSINLINE_IN _OU_CONVENTION_API 
 /*atomicord32 */AtomicXor(volatile atomicord32 *paoDestination, atomicord32 aoBitMask)
 {
 	return OSAtomicXor32OrigBarrier(aoBitMask, (__ou_bitmsk_target_t)paoDestination);
@@ -819,7 +768,7 @@ static _OU_ALWAYSINLINE atomicord32 _OU_CONVENTION_API
 
 #define __OU_ATOMIC_BIT_FUNCTIONS_DEFINED
 
-static _OU_ALWAYSINLINE atomicord32 _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE atomicord32 _OU_ALWAYSINLINE_IN _OU_CONVENTION_API 
 /*atomicord32 */AtomicAnd(volatile atomicord32 *paoDestination, atomicord32 aoBitMask)
 {
 	atomicord32 aoOldValue = *paoDestination;
@@ -841,7 +790,7 @@ static _OU_ALWAYSINLINE atomicord32 _OU_CONVENTION_API
 	return aoOldValue;
 }
 
-static _OU_ALWAYSINLINE atomicord32 _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE atomicord32 _OU_ALWAYSINLINE_IN _OU_CONVENTION_API 
 /*atomicord32 */AtomicOr(volatile atomicord32 *paoDestination, atomicord32 aoBitMask)
 {
 	atomicord32 aoOldValue = *paoDestination;
@@ -863,7 +812,7 @@ static _OU_ALWAYSINLINE atomicord32 _OU_CONVENTION_API
 	return aoOldValue;
 }
 
-static _OU_ALWAYSINLINE atomicord32 _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE atomicord32 _OU_ALWAYSINLINE_IN _OU_CONVENTION_API 
 /*atomicord32 */AtomicXor(volatile atomicord32 *paoDestination, atomicord32 aoBitMask)
 {
 	return (OSAtomicXor32Barrier(aoBitMask, (__ou_bitmsk_target_t)paoDestination) ^ aoBitMask);
@@ -877,7 +826,7 @@ static _OU_ALWAYSINLINE atomicord32 _OU_CONVENTION_API
 
 #define __OU_ATOMIC_PTR_FUNCTIONS_DEFINED
 
-static _OU_ALWAYSINLINE atomicptr _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE atomicptr _OU_ALWAYSINLINE_IN _OU_CONVENTION_API 
 /*atomicptr */AtomicExchangePointer(volatile atomicptr *papDestination, atomicptr apExchange)
 {
 	atomicptr apOldValue = *papDestination;
@@ -899,7 +848,7 @@ static _OU_ALWAYSINLINE atomicptr _OU_CONVENTION_API
 	return apOldValue;
 }
 
-static _OU_ALWAYSINLINE bool _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE bool _OU_ALWAYSINLINE_IN _OU_CONVENTION_API 
 /*bool */AtomicCompareExchangePointer(volatile atomicptr *papDestination, atomicptr apComparand, atomicptr apExchange)
 {
 	return OSAtomicCompareAndSwapPtrBarrier(apComparand, apExchange, papDestination);
@@ -911,37 +860,37 @@ static _OU_ALWAYSINLINE bool _OU_CONVENTION_API
 
 #define __OU_ATOMIC_ORD32_NORESULT_FUNCTIONS_DEFINED
 
-static _OU_ALWAYSINLINE void _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE void _OU_ALWAYSINLINE_IN _OU_CONVENTION_API 
 /*void */AtomicIncrementNoResult(volatile atomicord32 *paoDestination)
 {
-	OSAtomicIncrement32Barrier((__ou_intlck_target_t)paoDestination);
+	OSAtomicIncrement32Barrier(paoDestination);
 }
 
-static _OU_ALWAYSINLINE void _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE void _OU_ALWAYSINLINE_IN _OU_CONVENTION_API 
 /*void */AtomicDecrementNoResult(volatile atomicord32 *paoDestination)
 {
-	OSAtomicDecrement32Barrier((__ou_intlck_target_t)paoDestination);
+	OSAtomicDecrement32Barrier(paoDestination);
 }
 
-static _OU_ALWAYSINLINE void _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE void _OU_ALWAYSINLINE_IN _OU_CONVENTION_API 
 /*void */AtomicExchangeAddNoResult(volatile atomicord32 *paoDestination, atomicord32 aoAddend)
 {
-	OSAtomicAdd32Barrier(aoAddend, (__ou_xchgadd_target_t)paoDestination);
+	OSAtomicAdd32Barrier(aoAddend, paoDestination);
 }
 
-static _OU_ALWAYSINLINE void _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE void _OU_ALWAYSINLINE_IN _OU_CONVENTION_API 
 /*void */AtomicAndNoResult(volatile atomicord32 *paoDestination, atomicord32 aoBitMask)
 {
 	OSAtomicAnd32Barrier(aoBitMask, (__ou_bitmsk_target_t)paoDestination);
 }
 
-static _OU_ALWAYSINLINE void _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE void _OU_ALWAYSINLINE_IN _OU_CONVENTION_API 
 /*void */AtomicOrNoResult(volatile atomicord32 *paoDestination, atomicord32 aoBitMask)
 {
 	OSAtomicOr32Barrier(aoBitMask, (__ou_bitmsk_target_t)paoDestination);
 }
 
-static _OU_ALWAYSINLINE void _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE void _OU_ALWAYSINLINE_IN _OU_CONVENTION_API 
 /*void */AtomicXorNoResult(volatile atomicord32 *paoDestination, atomicord32 aoBitMask)
 {
 	OSAtomicXor32Barrier(aoBitMask, (__ou_bitmsk_target_t)paoDestination);
@@ -952,11 +901,6 @@ static _OU_ALWAYSINLINE void _OU_CONVENTION_API
 
 
 #undef __ou_bitmsk_target_t
-#undef __ou_cmpxchg_target_t
-#undef __ou_cmpxchg_value_t
-#undef __ou_xchgadd_target_t
-#undef __ou_intlck_target_t
-
 
 #endif // #if _OU_TARGET_OS == _OU_TARGET_OS_MAC
 
@@ -967,41 +911,38 @@ static _OU_ALWAYSINLINE void _OU_CONVENTION_API
 #if _OU_TARGET_OS == _OU_TARGET_OS_AIX
 
 
-END_NAMESPACE_OU();
+END_NAMESPACE_OU()
 
 
 #include <sys/atomic_op.h>
 
 
-BEGIN_NAMESPACE_OU();
+BEGIN_NAMESPACE_OU()
 
 
-typedef unsigned int atomicord32;
+typedef int atomicord32;
 typedef void *atomicptr;
-
-#define __ou_cas_value_t int
-#define __ou_caslp_value_t long
 
 
 #define __OU_ATOMIC_ORD32_FUNCTIONS_DEFINED
 
-static _OU_ALWAYSINLINE atomicord32 _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE atomicord32 _OU_ALWAYSINLINE_IN _OU_CONVENTION_API 
 /*atomicord32 */AtomicIncrement(volatile atomicord32 *paoDestination)
 {
 	return (fetch_and_add((atomic_p)paoDestination, 1) + 1);
 }
 
-static _OU_ALWAYSINLINE atomicord32 _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE atomicord32 _OU_ALWAYSINLINE_IN _OU_CONVENTION_API 
 /*atomicord32 */AtomicDecrement(volatile atomicord32 *paoDestination)
 {
 	return (fetch_and_add((atomic_p)paoDestination, -1) - 1);
 }
 
 
-static _OU_ALWAYSINLINE atomicord32 _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE atomicord32 _OU_ALWAYSINLINE_IN _OU_CONVENTION_API 
 /*atomicord32 */AtomicExchange(volatile atomicord32 *paoDestination, atomicord32 aoExchange)
 {
-	__ou_cas_value_t aoOldValue = *paoDestination;
+	atomicord32 aoOldValue = *paoDestination;
 
 	while (!compare_and_swap((atomic_p)paoDestination, &aoOldValue, aoExchange))
 	{
@@ -1011,16 +952,16 @@ static _OU_ALWAYSINLINE atomicord32 _OU_CONVENTION_API
 	return aoOldValue;
 }
 
-static _OU_ALWAYSINLINE atomicord32 _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE atomicord32 _OU_ALWAYSINLINE_IN _OU_CONVENTION_API 
 /*atomicord32 */AtomicExchangeAdd(volatile atomicord32 *paoDestination, atomicord32 aoAddend)
 {
 	return fetch_and_add((atomic_p)paoDestination, aoAddend);
 }
 
-static _OU_ALWAYSINLINE bool _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE bool _OU_ALWAYSINLINE_IN _OU_CONVENTION_API 
 /*bool */AtomicCompareExchange(volatile atomicord32 *paoDestination, atomicord32 aoComparand, atomicord32 aoExchange)
 {
-	__ou_cas_value_t aoOldValue = aoComparand;
+	atomicord32 aoOldValue = aoComparand;
 
 	return compare_and_swap((atomic_p)paoDestination, &aoOldValue, aoExchange);
 }
@@ -1028,22 +969,22 @@ static _OU_ALWAYSINLINE bool _OU_CONVENTION_API
 
 #define __OU_ATOMIC_BIT_FUNCTIONS_DEFINED
 
-static _OU_ALWAYSINLINE atomicord32 _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE atomicord32 _OU_ALWAYSINLINE_IN _OU_CONVENTION_API 
 /*atomicord32 */AtomicAnd(volatile atomicord32 *paoDestination, atomicord32 aoBitMask)
 {
 	return fetch_and_and((atomic_p)paoDestination, aoBitMask);
 }
 
-static _OU_ALWAYSINLINE atomicord32 _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE atomicord32 _OU_ALWAYSINLINE_IN _OU_CONVENTION_API 
 /*atomicord32 */AtomicOr(volatile atomicord32 *paoDestination, atomicord32 aoBitMask)
 {
 	return fetch_and_or((atomic_p)paoDestination, aoBitMask);
 }
 
-static _OU_ALWAYSINLINE atomicord32 _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE atomicord32 _OU_ALWAYSINLINE_IN _OU_CONVENTION_API 
 /*atomicord32 */AtomicXor(volatile atomicord32 *paoDestination, atomicord32 aoBitMask)
 {
-	volatile __ou_cas_value_t aoOldValue = *paoDestination;
+	volatile atomicord32 aoOldValue = *paoDestination;
 	
 	while (!compare_and_swap((atomic_p)paoDestination, &aoOldValue, aoOldValue ^ aoBitMask))
 	{
@@ -1058,12 +999,12 @@ static _OU_ALWAYSINLINE atomicord32 _OU_CONVENTION_API
 
 #define __OU_ATOMIC_PTR_FUNCTIONS_DEFINED
 
-static _OU_ALWAYSINLINE atomicptr _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE atomicptr _OU_ALWAYSINLINE_IN _OU_CONVENTION_API 
 /*atomicptr */AtomicExchangePointer(volatile atomicptr *papDestination, atomicptr apExchange)
 {
-	__ou_caslp_value_t liOldValue = (__ou_caslp_value_t)*papDestination;
+	long liOldValue = (long)*papDestination;
 	
-	while (!compare_and_swaplp((atomic_l)papDestination, &liOldValue, (__ou_caslp_value_t)apExchange))
+	while (!compare_and_swaplp((atomic_l)papDestination, &liOldValue, (long)apExchange))
 	{
 		// Do nothing
 	}
@@ -1071,20 +1012,16 @@ static _OU_ALWAYSINLINE atomicptr _OU_CONVENTION_API
 	return liOldValue;
 }
 
-static _OU_ALWAYSINLINE bool _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE bool _OU_ALWAYSINLINE_IN _OU_CONVENTION_API 
 /*bool */AtomicCompareExchangePointer(volatile atomicptr *papDestination, atomicptr apComparand, atomicptr apExchange)
 {
-	__ou_caslp_value_t liOldValue = (__ou_caslp_value_t)apComparand;
+	long liOldValue = (long)apComparand;
 	
-	return compare_and_swaplp((atomic_l)papDestination, &liOldValue, (__ou_caslp_value_t)apExchange);
+	return compare_and_swaplp((atomic_l)papDestination, &liOldValue, (long)apExchange);
 }
 
 
 #endif // #if _OU_TARGET_BITS == _OU_TARGET_BITS_64
-
-
-#undef __ou_caslp_value_t
-#undef __ou_cas_value_t
 
 
 #endif // #if _OU_TARGET_OS == _OU_TARGET_OS_AIX
@@ -1096,13 +1033,13 @@ static _OU_ALWAYSINLINE bool _OU_CONVENTION_API
 #if _OU_TARGET_OS == _OU_TARGET_OS_SUNOS
 
 
-END_NAMESPACE_OU();
+END_NAMESPACE_OU()
 
 
 #include <atomic.h>
 
 
-BEGIN_NAMESPACE_OU();
+BEGIN_NAMESPACE_OU()
 
 
 typedef uint32_t atomicord32;
@@ -1111,32 +1048,32 @@ typedef void *atomicptr;
 
 #define __OU_ATOMIC_ORD32_FUNCTIONS_DEFINED
 
-static _OU_ALWAYSINLINE atomicord32 _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE atomicord32 _OU_ALWAYSINLINE_IN _OU_CONVENTION_API 
 /*atomicord32 */AtomicIncrement(volatile atomicord32 *paoDestination)
 {
 	return atomic_inc_32_nv(paoDestination);
 }
 
-static _OU_ALWAYSINLINE atomicord32 _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE atomicord32 _OU_ALWAYSINLINE_IN _OU_CONVENTION_API 
 /*atomicord32 */AtomicDecrement(volatile atomicord32 *paoDestination)
 {
 	return atomic_dec_32_nv(paoDestination);
 }
 
 
-static _OU_ALWAYSINLINE atomicord32 _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE atomicord32 _OU_ALWAYSINLINE_IN _OU_CONVENTION_API 
 /*atomicord32 */AtomicExchange(volatile atomicord32 *paoDestination, atomicord32 aoExchange)
 {
 	return atomic_swap_32(paoDestination, aoExchange);
 }
 
-static _OU_ALWAYSINLINE atomicord32 _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE atomicord32 _OU_ALWAYSINLINE_IN _OU_CONVENTION_API 
 /*atomicord32 */AtomicExchangeAdd(volatile atomicord32 *paoDestination, atomicord32 aoAddend)
 {
 	return (atomic_add_32_nv(paoDestination, aoAddend) - aoAddend);
 }
 
-static _OU_ALWAYSINLINE bool _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE bool _OU_ALWAYSINLINE_IN _OU_CONVENTION_API 
 /*bool */AtomicCompareExchange(volatile atomicord32 *paoDestination, atomicord32 aoComparand, atomicord32 aoExchange)
 {
 	return (aoComparand == atomic_cas_32(paoDestination, aoComparand, aoExchange));
@@ -1145,7 +1082,7 @@ static _OU_ALWAYSINLINE bool _OU_CONVENTION_API
 
 #define __OU_ATOMIC_BIT_FUNCTIONS_DEFINED
 
-static _OU_ALWAYSINLINE atomicord32 _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE atomicord32 _OU_ALWAYSINLINE_IN _OU_CONVENTION_API 
 /*atomicord32 */AtomicAnd(volatile atomicord32 *paoDestination, atomicord32 aoBitMask)
 {
 	atomicord32 aoOldValue = *paoDestination;
@@ -1165,7 +1102,7 @@ static _OU_ALWAYSINLINE atomicord32 _OU_CONVENTION_API
 	return aoOldValue;
 }
 
-static _OU_ALWAYSINLINE atomicord32 _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE atomicord32 _OU_ALWAYSINLINE_IN _OU_CONVENTION_API 
 /*atomicord32 */AtomicOr(volatile atomicord32 *paoDestination, atomicord32 aoBitMask)
 {
 	atomicord32 aoOldValue = *paoDestination;
@@ -1185,7 +1122,7 @@ static _OU_ALWAYSINLINE atomicord32 _OU_CONVENTION_API
 	return aoOldValue;
 }
 
-static _OU_ALWAYSINLINE atomicord32 _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE atomicord32 _OU_ALWAYSINLINE_IN _OU_CONVENTION_API 
 /*atomicord32 */AtomicXor(volatile atomicord32 *paoDestination, atomicord32 aoBitMask)
 {
 	atomicord32 aoOldValue = *paoDestination;
@@ -1208,13 +1145,13 @@ static _OU_ALWAYSINLINE atomicord32 _OU_CONVENTION_API
 
 #define __OU_ATOMIC_PTR_FUNCTIONS_DEFINED
 
-static _OU_ALWAYSINLINE atomicptr _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE atomicptr _OU_ALWAYSINLINE_IN _OU_CONVENTION_API 
 /*atomicptr */AtomicExchangePointer(volatile atomicptr *papDestination, atomicptr apExchange)
 {
 	return atomic_swap_ptr(papDestination, apExchange);
 }
 
-static _OU_ALWAYSINLINE bool _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE bool _OU_ALWAYSINLINE_IN _OU_CONVENTION_API 
 /*bool */AtomicCompareExchangePointer(volatile atomicptr *papDestination, atomicptr apComparand, atomicptr apExchange)
 {
 	return (apComparand == atomic_cas_ptr(papDestination, apComparand, apExchange));
@@ -1223,37 +1160,37 @@ static _OU_ALWAYSINLINE bool _OU_CONVENTION_API
 
 #define __OU_ATOMIC_ORD32_NORESULT_FUNCTIONS_DEFINED
 
-static _OU_ALWAYSINLINE void _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE void _OU_ALWAYSINLINE_IN _OU_CONVENTION_API 
 /*void */AtomicIncrementNoResult(volatile atomicord32 *paoDestination)
 {
 	atomic_inc_32(paoDestination);
 }
 
-static _OU_ALWAYSINLINE void _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE void _OU_ALWAYSINLINE_IN _OU_CONVENTION_API 
 /*void */AtomicDecrementNoResult(volatile atomicord32 *paoDestination)
 {
 	atomic_dec_32(paoDestination);
 }
 
-static _OU_ALWAYSINLINE void _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE void _OU_ALWAYSINLINE_IN _OU_CONVENTION_API 
 /*void */AtomicExchangeAddNoResult(volatile atomicord32 *paoDestination, atomicord32 aoAddend)
 {
 	atomic_add_32(paoDestination, aoAddend);
 }
 
-static _OU_ALWAYSINLINE void _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE void _OU_ALWAYSINLINE_IN _OU_CONVENTION_API 
 /*void */AtomicAndNoResult(volatile atomicord32 *paoDestination, atomicord32 aoBitMask)
 {
 	atomic_and_32(paoDestination, aoBitMask);
 }
 
-static _OU_ALWAYSINLINE void _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE void _OU_ALWAYSINLINE_IN _OU_CONVENTION_API 
 /*void */AtomicOrNoResult(volatile atomicord32 *paoDestination, atomicord32 aoBitMask)
 {
 	atomic_or_32(paoDestination, aoBitMask);
 }
 
-static _OU_ALWAYSINLINE void _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE void _OU_ALWAYSINLINE_IN _OU_CONVENTION_API 
 /*void */AtomicXorNoResult(volatile atomicord32 *paoDestination, atomicord32 aoBitMask)
 {
 	AtomicXor(paoDestination, aoBitMask);
@@ -1270,15 +1207,9 @@ static _OU_ALWAYSINLINE void _OU_CONVENTION_API
 
 // No atomic functions for generic UNIX
 
-#if _OU_COMPILER == _OU_COMPILER_GCC && (_OU_TARGET_ARCH == _OU_TARGET_ARCH_X86 || _OU_TARGET_ARCH == _OU_TARGET_ARCH_X64)
+// x86 assembler implementation for i486 must be engaged explicitly
+#if defined(_OU_ATOMIC_USE_X86_ASSEMBLER)
 
-#define __OU_ATOMIC_X86_ASSEMBLER_USE_AUTOENABLED    1
-
-
-#endif // Otherwise the x86 assembler implementation must be engaged explicitly
-
-
-#if _OU_ATOMIC_USE_X86_ASSEMBLER || (__OU_ATOMIC_X86_ASSEMBLER_USE_AUTOENABLED && !defined(_OU_ATOMIC_USE_X86_ASSEMBLER))
 
 typedef uint32ou atomicord32;
 typedef void *atomicptr;
@@ -1293,42 +1224,42 @@ struct _ou_atomic_CLargeStruct
 #define __OU_ATOMIC_ORD32_FUNCTIONS_DEFINED
 
 
-static _OU_ALWAYSINLINE atomicord32 _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE atomicord32 _OU_ALWAYSINLINE_IN _OU_CONVENTION_API 
 /*atomicord32 */AtomicIncrement(volatile atomicord32 *paoDestination)
 {
-	atomicord32 aoResult = 1;
+	register atomicord32 aoResult = 1;
 
 	asm volatile (
 		"lock; xaddl %2, %0;"
 		: "=m" (*(volatile _ou_atomic_CLargeStruct *)paoDestination), "=r" (aoResult)
 		: "1" (aoResult), "m" (*paoDestination)
-		: "memory", "cc");
+		: "memory");
 
 	return aoResult + 1;
 }
 
-static _OU_ALWAYSINLINE atomicord32 _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE atomicord32 _OU_ALWAYSINLINE_IN _OU_CONVENTION_API 
 /*atomicord32 */AtomicDecrement(volatile atomicord32 *paoDestination)
 {
-	atomicord32 aoResult = (atomicord32)(-1);
+	register atomicord32 aoResult = (atomicord32)(-1);
 
 	asm volatile (
 		"lock; xaddl %2, %0;"
 		: "=m" (*(volatile _ou_atomic_CLargeStruct *)paoDestination), "=r" (aoResult)
 		: "1" (aoResult), "m" (*paoDestination)
-		: "memory", "cc");
+		: "memory");
 
 	return aoResult - 1;
 }
 
 
-static _OU_ALWAYSINLINE atomicord32 _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE atomicord32 _OU_ALWAYSINLINE_IN _OU_CONVENTION_API 
 /*atomicord32 */AtomicExchange(volatile atomicord32 *paoDestination, atomicord32 aoExchange)
 {
-	atomicord32 aoResult;
+	register atomicord32 aoResult;
 
 	asm volatile (
-		"xchgl %2, %0;"
+		"xchg %2, %0;"
 		: "=m" (*(volatile _ou_atomic_CLargeStruct *)paoDestination), "=r" (aoResult)
 		: "1" (aoExchange), "m" (*paoDestination)
 		: "memory");
@@ -1336,31 +1267,31 @@ static _OU_ALWAYSINLINE atomicord32 _OU_CONVENTION_API
 	return aoResult;
 }
 
-static _OU_ALWAYSINLINE atomicord32 _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE atomicord32 _OU_ALWAYSINLINE_IN _OU_CONVENTION_API 
 /*atomicord32 */AtomicExchangeAdd(volatile atomicord32 *paoDestination, atomicord32 aoAddend)
 {
-	atomicord32 aoResult;
+	register atomicord32 aoResult;
 
 	asm volatile (
 		"lock; xaddl %2, %0;"
 		: "=m" (*(volatile _ou_atomic_CLargeStruct *)paoDestination), "=r" (aoResult)
 		: "1" (aoAddend), "m" (*paoDestination)
-		: "memory", "cc");
+		: "memory");
 
 	return aoResult;
 }
 
-static _OU_ALWAYSINLINE bool _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE bool _OU_ALWAYSINLINE_IN _OU_CONVENTION_API 
 /*bool */AtomicCompareExchange(volatile atomicord32 *paoDestination, atomicord32 aoComparand, atomicord32 aoExchange)
 {
-	bool bResult;
+	register bool bResult;
 
 	asm volatile (
-        "lock; cmpxchgl %3, %0;"
-        "setzb %1;"
-        : "=m" (*(volatile _ou_atomic_CLargeStruct *)paoDestination), "=a" (bResult)
+		"lock; cmpxchgl %3, %0;"
+		"setzb %1;"
+		: "=m" (*(volatile _ou_atomic_CLargeStruct *)paoDestination), "=a" (bResult)
 		: "a" (aoComparand), "r" (aoExchange), "m" (*paoDestination)
-		: "memory", "cc");
+		: "memory");
 
 	return bResult;
 }
@@ -1368,11 +1299,11 @@ static _OU_ALWAYSINLINE bool _OU_CONVENTION_API
 
 #define __OU_ATOMIC_BIT_FUNCTIONS_DEFINED
 
-static _OU_ALWAYSINLINE atomicord32 _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE atomicord32 _OU_ALWAYSINLINE_IN _OU_CONVENTION_API 
 /*atomicord32 */AtomicAnd(volatile atomicord32 *paoDestination, atomicord32 aoBitMask)
 {
-	atomicord32 aoResult;
-	atomicord32 aoExchange;
+	register atomicord32 aoResult;
+	register atomicord32 aoExchange;
 
 	asm volatile (
 	"0:;"
@@ -1382,16 +1313,16 @@ static _OU_ALWAYSINLINE atomicord32 _OU_CONVENTION_API
 		"jnz   0b;"
 		: "=m" (*(volatile _ou_atomic_CLargeStruct *)paoDestination), "=a" (aoResult), "=&r" (aoExchange)
 		: "a" (*paoDestination), "g" (aoBitMask), "m" (*paoDestination)
-		: "memory", "cc");
+		: "memory");
 
 	return aoResult;
 }
 
-static _OU_ALWAYSINLINE atomicord32 _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE atomicord32 _OU_ALWAYSINLINE_IN _OU_CONVENTION_API 
 /*atomicord32 */AtomicOr(volatile atomicord32 *paoDestination, atomicord32 aoBitMask)
 {
-	atomicord32 aoResult;
-	atomicord32 aoExchange;
+	register atomicord32 aoResult;
+	register atomicord32 aoExchange;
 
 	asm volatile (
 	"0:;"
@@ -1401,16 +1332,16 @@ static _OU_ALWAYSINLINE atomicord32 _OU_CONVENTION_API
 		"jnz   0b;"
 		: "=m" (*(volatile _ou_atomic_CLargeStruct *)paoDestination), "=a" (aoResult), "=&r" (aoExchange)
 		: "a" (*paoDestination), "g" (aoBitMask), "m" (*paoDestination)
-		: "memory", "cc");
+		: "memory");
 
 	return aoResult;
 }
 
-static _OU_ALWAYSINLINE atomicord32 _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE atomicord32 _OU_ALWAYSINLINE_IN _OU_CONVENTION_API 
 /*atomicord32 */AtomicXor(volatile atomicord32 *paoDestination, atomicord32 aoBitMask)
 {
-	atomicord32 aoResult;
-	atomicord32 aoExchange;
+	register atomicord32 aoResult;
+	register atomicord32 aoExchange;
 
 	asm volatile (
 	"0:;"
@@ -1420,104 +1351,9 @@ static _OU_ALWAYSINLINE atomicord32 _OU_CONVENTION_API
 		"jnz   0b;"
 		: "=m" (*(volatile _ou_atomic_CLargeStruct *)paoDestination), "=a" (aoResult), "=&r" (aoExchange)
 		: "a" (*paoDestination), "g" (aoBitMask), "m" (*paoDestination)
-		: "memory", "cc");
+		: "memory");
 
 	return aoResult;
-}
-
-
-#define __OU_ATOMIC_ORD32_NORESULT_FUNCTIONS_DEFINED
-
-static _OU_ALWAYSINLINE void _OU_CONVENTION_API 
-/*void */AtomicIncrementNoResult(volatile atomicord32 *paoDestination)
-{
-    asm volatile (
-        "lock; incl %0;"
-        : "=m" (*(volatile _ou_atomic_CLargeStruct *)paoDestination)
-        : "m" (*paoDestination)
-        : "memory", "cc");
-}
-
-static _OU_ALWAYSINLINE void _OU_CONVENTION_API 
-/*void */AtomicDecrementNoResult(volatile atomicord32 *paoDestination)
-{
-    asm volatile (
-        "lock; decl %0;"
-        : "=m" (*(volatile _ou_atomic_CLargeStruct *)paoDestination)
-        : "m" (*paoDestination)
-        : "memory", "cc");
-}
-
-static _OU_ALWAYSINLINE void _OU_CONVENTION_API 
-/*void */AtomicExchangeAddNoResult(volatile atomicord32 *paoDestination, atomicord32 aoAddend)
-{
-    asm volatile (
-        "lock; addl %1, %0;"
-        : "=m,m,m" (*(volatile _ou_atomic_CLargeStruct *)paoDestination)
-        : "r,K,i" (aoAddend), "m,m,m" (*paoDestination)
-        : "memory", "cc");
-}
-
-static _OU_ALWAYSINLINE void _OU_CONVENTION_API 
-/*void */AtomicAndNoResult(volatile atomicord32 *paoDestination, atomicord32 aoBitMask)
-{
-    asm volatile (
-        "lock; andl %1, %0;"
-        : "=m,m,m" (*(volatile _ou_atomic_CLargeStruct *)paoDestination) 
-        : "r,K,i" (aoBitMask), "m,m,m" (*paoDestination)
-        : "memory", "cc");
-}
-
-static _OU_ALWAYSINLINE void _OU_CONVENTION_API 
-/*void */AtomicOrNoResult(volatile atomicord32 *paoDestination, atomicord32 aoBitMask)
-{
-    asm volatile (
-        "lock; orl %1, %0;"
-        : "=m,m,m" (*(volatile _ou_atomic_CLargeStruct *)paoDestination) 
-        : "r,K,i" (aoBitMask), "m,m,m" (*paoDestination)
-        : "memory", "cc");
-}
-
-static _OU_ALWAYSINLINE void _OU_CONVENTION_API 
-/*void */AtomicXorNoResult(volatile atomicord32 *paoDestination, atomicord32 aoBitMask)
-{
-    asm volatile (
-        "lock; xorl %1, %0;"
-        : "=m,m,m" (*(volatile _ou_atomic_CLargeStruct *)paoDestination) 
-        : "r,K,i" (aoBitMask), "m,m,m" (*paoDestination)
-        : "memory", "cc");
-}
-
-
-#define __OU_ATOMIC_PTR_FUNCTIONS_DEFINED
-
-static _OU_ALWAYSINLINE atomicptr _OU_CONVENTION_API 
-/*atomicptr */AtomicExchangePointer(volatile atomicptr *papDestination, atomicptr apExchange)
-{
-    atomicptr apResult;
-
-    asm volatile (
-        "xchg %2, %0;"
-        : "=m" (*(volatile _ou_atomic_CLargeStruct *)papDestination), "=r" (apResult)
-        : "1" (apExchange), "m" (*papDestination)
-        : "memory");
-
-    return apResult;
-}
-
-static _OU_ALWAYSINLINE bool _OU_CONVENTION_API 
-/*bool */AtomicCompareExchangePointer(volatile atomicptr *papDestination, atomicptr apComparand, atomicptr apExchange)
-{
-    bool bResult;
-
-    asm volatile (
-        "lock; cmpxchg %3, %0;"
-        "setzb %1;"
-        : "=m" (*(volatile _ou_atomic_CLargeStruct *)papDestination), "=a" (bResult)
-        : "a" (apComparand), "r" (apExchange), "m" (*papDestination)
-        : "memory", "cc");
-
-    return bResult;
 }
 
 
@@ -1534,7 +1370,7 @@ static _OU_ALWAYSINLINE bool _OU_CONVENTION_API
 
 #define __OU_ATOMIC_BIT_FUNCTIONS_DEFINED
 
-static _OU_ALWAYSINLINE atomicord32 _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE atomicord32 _OU_ALWAYSINLINE_IN _OU_CONVENTION_API 
 /*atomicord32 */AtomicAnd(volatile atomicord32 *paoDestination, atomicord32 aoBitMask)
 {
 	atomicord32 aoOldValue = *paoDestination;
@@ -1552,7 +1388,7 @@ static _OU_ALWAYSINLINE atomicord32 _OU_CONVENTION_API
     return aoOldValue;
 }
 
-static _OU_ALWAYSINLINE atomicord32 _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE atomicord32 _OU_ALWAYSINLINE_IN _OU_CONVENTION_API 
 /*atomicord32 */AtomicOr(volatile atomicord32 *paoDestination, atomicord32 aoBitMask)
 {
 	atomicord32 aoOldValue = *paoDestination;
@@ -1570,7 +1406,7 @@ static _OU_ALWAYSINLINE atomicord32 _OU_CONVENTION_API
     return aoOldValue;
 }
 
-static _OU_ALWAYSINLINE atomicord32 _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE atomicord32 _OU_ALWAYSINLINE_IN _OU_CONVENTION_API 
 /*atomicord32 */AtomicXor(volatile atomicord32 *paoDestination, atomicord32 aoBitMask)
 {
 	atomicord32 aoOldValue = *paoDestination;
@@ -1599,13 +1435,13 @@ static _OU_ALWAYSINLINE atomicord32 _OU_CONVENTION_API
 
 #define __OU_ATOMIC_PTR_FUNCTIONS_DEFINED
 
-static _OU_ALWAYSINLINE atomicptr _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE atomicptr _OU_ALWAYSINLINE_IN _OU_CONVENTION_API 
 /*atomicptr */AtomicExchangePointer(volatile atomicptr *papDestination, atomicptr apExchange)
 {
 	return (atomicptr)AtomicExchange((volatile atomicord32 *)papDestination, (atomicord32)apExchange);
 }
 
-static _OU_ALWAYSINLINE bool _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE bool _OU_ALWAYSINLINE_IN _OU_CONVENTION_API 
 /*bool */AtomicCompareExchangePointer(volatile atomicptr *papDestination, atomicptr apComparand, atomicptr apExchange)
 {
 	return AtomicCompareExchange((volatile atomicord32 *)papDestination, (atomicord32)apComparand, (atomicord32)apExchange);
@@ -1621,13 +1457,13 @@ static _OU_ALWAYSINLINE bool _OU_CONVENTION_API
 #if !defined(__OU_ATOMIC_ORD32_FUNCTIONS_DEFINED)
 
 
-END_NAMESPACE_OU();
+END_NAMESPACE_OU()
 
 
 #include <stddef.h>
 
 
-BEGIN_NAMESPACE_OU();
+BEGIN_NAMESPACE_OU()
 
 
 typedef int32_t atomicord32;
@@ -1666,22 +1502,20 @@ atomicord32 _OU_CONVENTION_API AtomicXor(volatile atomicord32 *paoDestination, a
 
 #if !defined(__OU_ATOMIC_PTR_FUNCTIONS_DEFINED)
 
-atomicptr _OU_CONVENTION_API AtomicExchangePointer(volatile atomicptr *papDestination, atomicptr apExchange);
-bool _OU_CONVENTION_API AtomicCompareExchangePointer(volatile atomicptr *papDestination, atomicptr apComparand, atomicptr apExchange);
+atomicptr _OU_CONVENTION_API OU_VISIBLE AtomicExchangePointer(volatile atomicptr *papDestination, atomicptr apExchange);
+bool _OU_CONVENTION_API OU_VISIBLE AtomicCompareExchangePointer(volatile atomicptr *papDestination, atomicptr apComparand, atomicptr apExchange);
 
 
 #if defined(__OU_DOXYGEN__) 
 
 // Doxygen fooling declarations (used for documentation generation only)
-void _OU_CONVENTION_API AtomicIncrementNoResult(volatile atomicord32 *paoDestination);
-void _OU_CONVENTION_API AtomicDecrementNoResult(volatile atomicord32 *paoDestination);
-void _OU_CONVENTION_API AtomicStore(volatile atomicord32 *paoDestination, atomicord32 aoValue);
-void _OU_CONVENTION_API AtomicExchangeAddNoResult(volatile atomicord32 *paoDestination, atomicord32 aoAddend);
-void _OU_CONVENTION_API AtomicAndNoResult(volatile atomicord32 *paoDestination, atomicord32 aoBitMask);
-void _OU_CONVENTION_API AtomicOrNoResult(volatile atomicord32 *paoDestination, atomicord32 aoBitMask);
-void _OU_CONVENTION_API AtomicXorNoResult(volatile atomicord32 *paoDestination, atomicord32 aoBitMask);
-void _OU_CONVENTION_API AtomicStorePointer(volatile atomicptr *papDestination, atomicptr apValue);
-void _OU_CONVENTION_API AtomicReadReorderBarrier();
+void _OU_CONVENTION_API OU_VISIBLE AtomicIncrementNoResult(volatile atomicord32 *paoDestination);
+void _OU_CONVENTION_API OU_VISIBLE AtomicDecrementNoResult(volatile atomicord32 *paoDestination);
+void _OU_CONVENTION_API OU_VISIBLE AtomicExchangeAddNoResult(volatile atomicord32 *paoDestination, atomicord32 aoAddend);
+void _OU_CONVENTION_API OU_VISIBLE AtomicAndNoResult(volatile atomicord32 *paoDestination, atomicord32 aoBitMask);
+void _OU_CONVENTION_API OU_VISIBLE AtomicOrNoResult(volatile atomicord32 *paoDestination, atomicord32 aoBitMask);
+void _OU_CONVENTION_API OU_VISIBLE AtomicXorNoResult(volatile atomicord32 *paoDestination, atomicord32 aoBitMask);
+
 
 #endif // #if defined(__OU_DOXYGEN__)
 
@@ -1690,8 +1524,8 @@ void _OU_CONVENTION_API AtomicReadReorderBarrier();
 #define __OU_ATOMIC_INITIALIZATION_FUNCTIONS_REQUIRED
 
 // Initialization must be performed from main thread
-bool _OU_CONVENTION_API InitializeAtomicAPI();
-void _OU_CONVENTION_API FinalizeAtomicAPI();
+bool _OU_CONVENTION_API OU_VISIBLE InitializeAtomicAPI();
+void _OU_CONVENTION_API OU_VISIBLE FinalizeAtomicAPI();
 
 
 #endif // #if !defined(__OU_ATOMIC_PTR_FUNCTIONS_DEFINED)
@@ -1702,37 +1536,37 @@ void _OU_CONVENTION_API FinalizeAtomicAPI();
 
 #if !defined(__OU_ATOMIC_ORD32_NORESULT_FUNCTIONS_DEFINED)
 
-static _OU_ALWAYSINLINE void _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE void _OU_ALWAYSINLINE_IN _OU_CONVENTION_API 
 /*void */AtomicIncrementNoResult(volatile atomicord32 *paoDestination)
 {
 	AtomicIncrement(paoDestination);
 }
 
-static _OU_ALWAYSINLINE void _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE void _OU_ALWAYSINLINE_IN _OU_CONVENTION_API 
 /*void */AtomicDecrementNoResult(volatile atomicord32 *paoDestination)
 {
 	AtomicDecrement(paoDestination);
 }
 
-static _OU_ALWAYSINLINE void _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE void _OU_ALWAYSINLINE_IN _OU_CONVENTION_API 
 /*void */AtomicExchangeAddNoResult(volatile atomicord32 *paoDestination, atomicord32 aoAddend)
 {
 	AtomicExchangeAdd(paoDestination, aoAddend);
 }
 
-static _OU_ALWAYSINLINE void _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE void _OU_ALWAYSINLINE_IN _OU_CONVENTION_API 
 /*void */AtomicAndNoResult(volatile atomicord32 *paoDestination, atomicord32 aoBitMask)
 {
 	AtomicAnd(paoDestination, aoBitMask);
 }
 
-static _OU_ALWAYSINLINE void _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE void _OU_ALWAYSINLINE_IN _OU_CONVENTION_API 
 /*void */AtomicOrNoResult(volatile atomicord32 *paoDestination, atomicord32 aoBitMask)
 {
 	AtomicOr(paoDestination, aoBitMask);
 }
 
-static _OU_ALWAYSINLINE void _OU_CONVENTION_API 
+static _OU_ALWAYSINLINE_PRE void _OU_ALWAYSINLINE_IN _OU_CONVENTION_API 
 /*void */AtomicXorNoResult(volatile atomicord32 *paoDestination, atomicord32 aoBitMask)
 {
 	AtomicXor(paoDestination, aoBitMask);
@@ -1740,68 +1574,6 @@ static _OU_ALWAYSINLINE void _OU_CONVENTION_API
 
 
 #endif // #if !defined(__OU_ATOMIC_ORD32_NORESULT_FUNCTIONS_DEFINED)
-
-
-//////////////////////////////////////////////////////////////////////////
-// Default Load/Store function implementations
-
-#if !defined(__OU_ATOMIC_READREORDERBARRIER_FUNCTION_DEFINED) && _OU_COMPILER == _OU_COMPILER_GCC
-
-// These architectures are known (by me ;-))to retain memory read request order
-#if (_OU_TARGET_ARCH == _OU_TARGET_ARCH_X86 || _OU_TARGET_ARCH == _OU_TARGET_ARCH_X64)
-
-#define __OU_ATOMIC_READREORDERBARRIER_FUNCTION_DEFINED
-
-static _OU_ALWAYSINLINE void _OU_CONVENTION_API 
-/*void */AtomicReadReorderBarrier()
-{
-    // x86/x64 architectures do not reorder memory reads anyway
-    // it's only necessary to stop compiler from reordering read instructions
-    asm volatile ( "" : : :"memory" );
-}
-
-
-#endif // #if (_OU_TARGET_ARCH == _OU_TARGET_ARCH_X86 || _OU_TARGET_ARCH == _OU_TARGET_ARCH_X64)
-
-
-#endif // #if !defined(__OU_ATOMIC_READREORDERBARRIER_FUNCTION_DEFINED) && _OU_COMPILER == _OU_COMPILER_GCC
-
-
-#ifndef __OU_ATOMIC_READREORDERBARRIER_FUNCTION_DEFINED
-
-static _OU_ALWAYSINLINE void _OU_CONVENTION_API 
-/*void */AtomicReadReorderBarrier()
-{
-    atomicord32 aoTemporaryValue;
-    AtomicExchangeAddNoResult(&aoTemporaryValue, 0);
-}
-
-
-#endif // #ifndef __OU_ATOMIC_READREORDERBARRIER_FUNCTION_DEFINED
-
-
-#ifndef __OU_ATOMIC_STORE_FUNCTION_DEFINED
-
-static _OU_ALWAYSINLINE void _OU_CONVENTION_API 
-/*void */AtomicStore(volatile atomicord32 *paoDestination, atomicord32 aoValue)
-{
-    AtomicExchange(paoDestination, aoValue);
-}
-
-
-#endif // #ifndef __OU_ATOMIC_STORE_FUNCTION_DEFINED
-
-
-#ifndef __OU_ATOMIC_STOREPTR_FUNCTION_DEFINED
-
-static _OU_ALWAYSINLINE void _OU_CONVENTION_API 
-/*void */AtomicStorePointer(volatile atomicptr *papDestination, atomicptr apValue)
-{
-    AtomicExchangePointer(papDestination, apValue);
-}
-
-
-#endif // #ifndef __OU_ATOMIC_STOREPTR_FUNCTION_DEFINED
 
 
 //////////////////////////////////////////////////////////////////////////
@@ -1826,10 +1598,8 @@ static _OU_INLINE void _OU_CONVENTION_API FinalizeAtomicAPI()
 #endif // #if !defined(__OU_ATOMIC_INITIALIZE_FUNCTIONS_DEFINED)
 
 
-END_NAMESPACE_OU();
+END_NAMESPACE_OU()
 
-
-#endif // #if _OU_FEATURE_SET >= _OU_FEATURE_SET_ATOMICS
 
 
 #endif // #ifndef __OU_ATOMIC_H_INCLUDED

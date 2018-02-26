@@ -54,19 +54,16 @@ dxJointDBall::getInfo1( dxJoint::Info1 *info )
 }
 
 void
-dxJointDBall::getInfo2( dReal worldFPS, dReal /*worldERP*/, 
-    int rowskip, dReal *J1, dReal *J2,
-    int pairskip, dReal *pairRhsCfm, dReal *pairLoHi, 
-    int *findex )
+dxJointDBall::getInfo2( dReal worldFPS, dReal /*worldERP*/, const Info2 *info )
 {
+    info->cfm[0] = this->cfm;
+
     dVector3 globalA1, globalA2;
     dBodyGetRelPointPos(node[0].body, anchor1[0], anchor1[1], anchor1[2], globalA1);
-    
-    if (node[1].body) {
+    if (node[1].body)
         dBodyGetRelPointPos(node[1].body, anchor2[0], anchor2[1], anchor2[2], globalA2);
-    } else {
+    else
         dCopyVector3(globalA2, anchor2);
-    }
 
     dVector3 q;
     dSubtractVectors3(q, globalA1, globalA2);
@@ -82,23 +79,24 @@ dxJointDBall::getInfo2( dReal worldFPS, dReal /*worldERP*/,
         // heuristic: difference in velocities at anchors
         dVector3 v1, v2;
         dBodyGetPointVel(node[0].body, globalA1[0], globalA1[1], globalA1[2], v1);
-    
-        if (node[1].body) {
+        if (node[1].body)
             dBodyGetPointVel(node[1].body, globalA2[0], globalA2[1], globalA2[2], v2);
-        } else {
-            dZeroVector3(v2);
-        }
-
+        else
+            dSetZero(v2, 3);
         dSubtractVectors3(q, v1, v2);
 
         if (dCalcVectorLength3(q) < MIN_LENGTH) {
             // this direction is as good as any
-            dAssignVector3(q, 1, 0, 0);
+            q[0] = 1;
+            q[1] = 0;
+            q[2] = 0;
         }
     }
     dNormalize3(q);
 
-    dCopyVector3(J1 + GI2__JL_MIN, q);
+    info->J1l[0] = q[0];
+    info->J1l[1] = q[1];
+    info->J1l[2] = q[2];
 
     dVector3 relA1;
     dBodyVectorToWorld(node[0].body,
@@ -106,27 +104,103 @@ dxJointDBall::getInfo2( dReal worldFPS, dReal /*worldERP*/,
                        relA1);
 
     dMatrix3 a1m;
-    dZeroMatrix3(a1m);
+    dSetZero(a1m, 12);
     dSetCrossMatrixMinus(a1m, relA1, 4);
 
-    dMultiply1_331(J1 + GI2__JA_MIN, a1m, q);
+    dMultiply1_331(info->J1a, a1m, q);
 
     if (node[1].body) {
-        dCopyNegatedVector3(J2 + GI2__JL_MIN, q);
+        info->J2l[0] = -q[0];
+        info->J2l[1] = -q[1];
+        info->J2l[2] = -q[2];
 
         dVector3 relA2;
         dBodyVectorToWorld(node[1].body,
                            anchor2[0], anchor2[1], anchor2[2],
                            relA2);
         dMatrix3 a2m;
-        dZeroMatrix3(a2m);
+        dSetZero(a2m, 12);
         dSetCrossMatrixPlus(a2m, relA2, 4);
-        dMultiply1_331(J2 + GI2__JA_MIN, a2m, q);
+        dMultiply1_331(info->J2a, a2m, q);
     }
     
     const dReal k = worldFPS * this->erp;
-    pairRhsCfm[GI2_RHS] = k * (targetDistance - dCalcPointsDistance3(globalA1, globalA2));
-    pairRhsCfm[GI2_CFM] = this->cfm;
+    info->c[0] = k * (targetDistance - dCalcPointsDistance3(globalA1, globalA2));
+}
+
+void
+dxJointDBall::getInfo2( Info2 *info )
+{
+    info->cfm[0] = this->cfm;
+
+    dVector3 globalA1, globalA2;
+    dBodyGetRelPointPos(node[0].body, anchor1[0], anchor1[1], anchor1[2], globalA1);
+    if (node[1].body)
+        dBodyGetRelPointPos(node[1].body, anchor2[0], anchor2[1], anchor2[2], globalA2);
+    else
+        dCopyVector3(globalA2, anchor2);
+
+    dVector3 q;
+    dSubtractVectors3(q, globalA1, globalA2);
+
+#ifdef dSINGLE
+    const dReal MIN_LENGTH = REAL(1e-7);
+#else
+    const dReal MIN_LENGTH = REAL(1e-12);
+#endif
+
+    if (dCalcVectorLength3(q) < MIN_LENGTH) {
+        // too small, let's choose an arbitrary direction
+        // heuristic: difference in velocities at anchors
+        dVector3 v1, v2;
+        dBodyGetPointVel(node[0].body, globalA1[0], globalA1[1], globalA1[2], v1);
+        if (node[1].body)
+            dBodyGetPointVel(node[1].body, globalA2[0], globalA2[1], globalA2[2], v2);
+        else
+            dSetZero(v2, 3);
+        dSubtractVectors3(q, v1, v2);
+
+        if (dCalcVectorLength3(q) < MIN_LENGTH) {
+            // this direction is as good as any
+            q[0] = 1;
+            q[1] = 0;
+            q[2] = 0;
+        }
+    }
+    dNormalize3(q);
+
+    info->J1l[0] = q[0];
+    info->J1l[1] = q[1];
+    info->J1l[2] = q[2];
+
+    dVector3 relA1;
+    dBodyVectorToWorld(node[0].body,
+                       anchor1[0], anchor1[1], anchor1[2],
+                       relA1);
+
+    dMatrix3 a1m;
+    dSetZero(a1m, 12);
+    dSetCrossMatrixMinus(a1m, relA1, 4);
+
+    dMultiply1_331(info->J1a, a1m, q);
+
+    if (node[1].body) {
+        info->J2l[0] = -q[0];
+        info->J2l[1] = -q[1];
+        info->J2l[2] = -q[2];
+
+        dVector3 relA2;
+        dBodyVectorToWorld(node[1].body,
+                           anchor2[0], anchor2[1], anchor2[2],
+                           relA2);
+        dMatrix3 a2m;
+        dSetZero(a2m, 12);
+        dSetCrossMatrixPlus(a2m, relA2, 4);
+        dMultiply1_331(info->J2a, a2m, q);
+    }
+    
+    const dReal k = 0.2;  // info->fps * this->erp;
+    info->c[0] = k * (targetDistance - dCalcPointsDistance3(globalA1, globalA2));
 }
 
 
@@ -210,15 +284,6 @@ dReal dJointGetDBallDistance(dJointID j)
     return joint->targetDistance;
 }
 
-void dJointSetDBallDistance(dJointID j, dReal dist)
-{
-    dxJointDBall* joint = static_cast<dxJointDBall*>(j);
-    dUASSERT( joint, "bad joint argument" );
-    dUASSERT( dist>=0, "target distance must be non-negative" );
-
-    joint->targetDistance = dist;
-}
-
 
 void dJointGetDBallAnchor1( dJointID j, dVector3 result )
 {
@@ -272,6 +337,9 @@ void dJointSetDBallParam( dJointID j, int parameter, dReal value )
         case dParamERP:
             joint->erp = value;
             break;
+        default:
+            dUASSERT( false, "unknown joint parameter" );
+            break;
     }
 }
 
@@ -298,7 +366,7 @@ dxJointDBall::type() const
     return dJointTypeDBall;
 }
 
-sizeint
+size_t
 dxJointDBall::size() const
 {
     return sizeof( *this );

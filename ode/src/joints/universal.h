@@ -38,6 +38,8 @@ struct dxJointUniversal : public dxJoint
     dxJointLimitMotor limot1; // limit and motor information for axis1
     dxJointLimitMotor limot2; // limit and motor information for axis2
 
+    dReal cumulative_angle1; // save a cumulative angle for beyond +/-pi limits
+    dReal cumulative_angle2; // save a cumulative angle for beyond +/-pi limits
 
     void getAxes( dVector3 ax1, dVector3 ax2 );
     void getAngles( dReal *angle1, dReal *angle2 );
@@ -49,12 +51,9 @@ struct dxJointUniversal : public dxJoint
     dxJointUniversal( dxWorld *w );
     virtual void getSureMaxInfo( SureMaxInfo* info );
     virtual void getInfo1( Info1* info );
-    virtual void getInfo2( dReal worldFPS, dReal worldERP, 
-        int rowskip, dReal *J1, dReal *J2,
-        int pairskip, dReal *pairRhsCfm, dReal *pairLoHi, 
-        int *findex);
+    virtual void getInfo2( Info2* info );
     virtual dJointType type() const;
-    virtual sizeint size() const;
+    virtual size_t size() const;
 
     virtual void setRelativeValues();
 };

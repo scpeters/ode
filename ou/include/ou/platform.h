@@ -31,15 +31,14 @@
 //////////////////////////////////////////////////////////////////////////
 // Target definitions
 
-#define _OU_TARGET_OS_GENUNIX   1
-#define _OU_TARGET_OS_WINDOWS   2
-#define _OU_TARGET_OS_QNX       3
-#define _OU_TARGET_OS_MAC       4
-#define _OU_TARGET_OS_AIX       5
-#define _OU_TARGET_OS_SUNOS     6
-#define _OU_TARGET_OS_IOS       7
+#define _OU_TARGET_OS_GENUNIX	1
+#define _OU_TARGET_OS_WINDOWS	2
+#define _OU_TARGET_OS_QNX		3
+#define _OU_TARGET_OS_MAC		4
+#define _OU_TARGET_OS_AIX		5
+#define _OU_TARGET_OS_SUNOS		6
 
-#define _OU_TARGET_OS__MAX      8
+#define _OU_TARGET_OS__MAX		7
 
 
 #define _OU_TARGET_BITS_32		1
@@ -48,16 +47,14 @@
 #define _OU_TARGET_BITS__MAX	3
 
 
-#define _OU_TARGET_ARCH_OTHER   1
-#define _OU_TARGET_ARCH_X86     2
-#define _OU_TARGET_ARCH_IA64    3
-#define _OU_TARGET_ARCH_X64     4
-#define _OU_TARGET_ARCH_POWERPC 5
-#define _OU_TARGET_ARCH_SPARC   6
-#define _OU_TARGET_ARCH_ARM     7
-#define _OU_TARGET_ARCH_AARCH64	8
+#define _OU_TARGET_ARCH_OTHER	1
+#define _OU_TARGET_ARCH_X86	2
+#define _OU_TARGET_ARCH_IA64	3
+#define _OU_TARGET_ARCH_X64		4
+#define _OU_TARGET_ARCH_POWERPC	5
+#define _OU_TARGET_ARCH_SPARC	6
 
-#define _OU_TARGET_ARCH__MAX    9
+#define _OU_TARGET_ARCH__MAX	7
 
 
 //////////////////////////////////////////////////////////////////////////
@@ -77,26 +74,8 @@
 
 #elif defined(__APPLE__)
 
-#if TARGET_OS_IPHONE || TARGET_IPHONE_SIMULATOR
-
-#define _OU_TARGET_OS			_OU_TARGET_OS_IOS
-
-#if !defined(MAC_OS_X_VERSION)
-#define MAC_OS_X_VERSION	1050
-#endif
-
-
-#elif TARGET_OS_MAC
-
 #define _OU_TARGET_OS			_OU_TARGET_OS_MAC
 
-
-#else // An unknown Apple target
-
-#error Build Apple target is not supported
-
-
-#endif // // An unknown Apple target
 
 #elif defined(__aix__)
 
@@ -206,16 +185,6 @@
 #elif defined(__sparc__)
 
 #define _OU_TARGET_ARCH			_OU_TARGET_ARCH_SPARC
-
-
-#elif defined(__arm__) || defined(_M_ARM) || defined(TARGET_OS_IPHONE)
- 
-#define _OU_TARGET_ARCH         _OU_TARGET_ARCH_ARM
-
-
-#elif defined(__aarch64__)
-
-#define _OU_TARGET_ARCH         _OU_TARGET_ARCH_AARCH64
 
 
 #else // Unknown architecture
@@ -359,17 +328,20 @@
 
 #if _OU_COMPILER == _OU_COMPILER_GCC
 
-#define _OU_ALWAYSINLINE__DEFINITION inline __attribute__((always_inline))
+#define _OU_ALWAYSINLINE_PRE__DEFINITION inline
+#define _OU_ALWAYSINLINE_IN__DEFINITION __attribute__((always_inline))
 
 
 #elif _OU_COMPILER == _OU_COMPILER_MSVC
 
-#define _OU_ALWAYSINLINE__DEFINITION inline __forceinline
+#define _OU_ALWAYSINLINE_PRE__DEFINITION __forceinline
+#define _OU_ALWAYSINLINE_IN__DEFINITION
 
 
 #else // if _OU_COMPILER == _OU_COMPILER_OTHER
 
-#define _OU_ALWAYSINLINE__DEFINITION inline
+#define _OU_ALWAYSINLINE_PRE__DEFINITION inline
+#define _OU_ALWAYSINLINE_IN__DEFINITION
 
 
 #endif // #if _OU_COMPILER == ...
@@ -377,14 +349,16 @@
 
 #if defined(_DEBUG)
 
-#define _OU_ALWAYSINLINE inline
+#define _OU_ALWAYSINLINE_PRE inline
+#define _OU_ALWAYSINLINE_IN
 
 #define _OU_INLINE inline
 
 
 #else // #if !defined(_DEBUG)
 
-#define _OU_ALWAYSINLINE _OU_ALWAYSINLINE__DEFINITION
+#define _OU_ALWAYSINLINE_PRE _OU_ALWAYSINLINE_PRE__DEFINITION
+#define _OU_ALWAYSINLINE_IN _OU_ALWAYSINLINE_IN__DEFINITION
 
 #define _OU_INLINE inline
 

@@ -35,14 +35,11 @@
 		inline_					~Matrix3x3()								{}
 
 		//! Assign values
-		template<typename trotationfloat>
-		inline_	void			Set(trotationfloat m00, trotationfloat m01, trotationfloat m02, 
-									trotationfloat m10, trotationfloat m11, trotationfloat m12, 
-									trotationfloat m20, trotationfloat m21, trotationfloat m22)
+		inline_	void			Set(float m00, float m01, float m02, float m10, float m11, float m12, float m20, float m21, float m22)
 								{
-									m[0][0] = (float)m00;	m[0][1] = (float)m01;	m[0][2] = (float)m02;
-									m[1][0] = (float)m10;	m[1][1] = (float)m11;	m[1][2] = (float)m12;
-									m[2][0] = (float)m20;	m[2][1] = (float)m21;	m[2][2] = (float)m22;
+									m[0][0] = m00;	m[0][1] = m01;	m[0][2] = m02;
+									m[1][0] = m10;	m[1][1] = m11;	m[1][2] = m12;
+									m[2][0] = m20;	m[2][1] = m21;	m[2][2] = m22;
 								}
 
 		//! Sets the scale from a Point. The point is put on the diagonal.
@@ -406,7 +403,7 @@ void FromQuatL2(const Quat &q, float l2);
 		//! Operator for Matrix3x3 Div = Matrix3x3 / float;
 		inline_	Matrix3x3		operator/(float s)				const
 								{
-									if (s)	s = 1.0f / s;
+									if (!_equal(s, 0.0))	s = 1.0f / s;
 									return Matrix3x3(
 									m[0][0]*s,	m[0][1]*s,	m[0][2]*s,
 									m[1][0]*s,	m[1][1]*s,	m[1][2]*s,
@@ -474,7 +471,7 @@ void FromQuatL2(const Quat &q, float l2);
 		//! Operator for Matrix3x3 /= float
 		inline_	Matrix3x3&		operator/=(float s)
 								{
-									if (s)	s = 1.0f / s;
+									if (!_equal(s, 0.0))	s = 1.0f / s;
 									m[0][0] *= s;	m[0][1] *= s;	m[0][2] *= s;
 									m[1][0] *= s;	m[1][1] *= s;	m[1][2] *= s;
 									m[2][0] *= s;	m[2][1] *= s;	m[2][2] *= s;

@@ -32,20 +32,18 @@ struct dxJointFixed : public dxJoint
 {
     dQuaternion qrel;   // initial relative rotation body1 -> body2
     dVector3 offset;    // relative offset between the bodies
-    dReal erp;          // error reduction parameter
-    dReal cfm;          // constraint force mix-in
+    // erp and cfm moved to joint.h by OSRF
+    // dReal erp;          // error reduction parameter
+    // dReal cfm;          // constraint force mix-in
     void  set ( int num, dReal value );
     dReal get ( int num );
 
     dxJointFixed ( dxWorld *w );
     virtual void getSureMaxInfo( SureMaxInfo* info );
     virtual void getInfo1 ( Info1* info );
-    virtual void getInfo2 ( dReal worldFPS, dReal worldERP, 
-        int rowskip, dReal *J1, dReal *J2,
-        int pairskip, dReal *pairRhsCfm, dReal *pairLoHi, 
-        int *findex );
+    virtual void getInfo2 ( Info2* info );
     virtual dJointType type() const;
-    virtual sizeint size() const;
+    virtual size_t size() const;
 
     void computeInitialRelativeRotation();
 };

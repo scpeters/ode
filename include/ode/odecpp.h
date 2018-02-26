@@ -1,17 +1,17 @@
 /*************************************************************************
  *                                                                       *
- * Open Dynamics Engine, Copyright (C) 2001,2002 Russell L. Smith.       *
+ * Open Dynamics Engine, Copyright (C) 2001, 2002 Russell L. Smith.      *
  * All rights reserved.  Email: russ@q12.org   Web: www.q12.org          *
  *                                                                       *
  * This library is free software; you can redistribute it and/or         *
  * modify it under the terms of EITHER:                                  *
  *   (1) The GNU Lesser General Public License as published by the Free  *
- *       Software Foundation; either version 2.1 of the License, or (at  *
- *       your option) any later version. The text of the GNU Lesser      *
- *       General Public License is included with this library in the     *
- *       file LICENSE.TXT.                                               *
+ *   Software Foundation; either version 2.1 of the License, or (at      *
+ *   your option) any later version. The text of the GNU Lesser          *
+ *   General Public License is included with this library in the         *
+ *   file LICENSE.TXT.                                                   *
  *   (2) The BSD-style license that is included with this library in     *
- *       the file LICENSE-BSD.TXT.                                       *
+ *   the file LICENSE-BSD.TXT.                                           *
  *                                                                       *
  * This library is distributed in the hope that it will be useful,       *
  * but WITHOUT ANY WARRANTY; without even the implied warranty of        *
@@ -35,22 +35,22 @@
 
 class dWorldSimpleIDContainer {
 protected:
-	dWorldID _id;
+  dWorldID _id;
 
-	dWorldSimpleIDContainer(): _id(0) {}
-	~dWorldSimpleIDContainer() { destroy(); }
+  dWorldSimpleIDContainer(): _id(0) {}
+  ~dWorldSimpleIDContainer() { destroy(); }
 
-	void destroy() { 
-		if (_id) {
-			dWorldDestroy(_id); 
-			_id = 0;
-		}
-	}
+  void destroy() {
+    if (_id) {
+      dWorldDestroy(_id);
+      _id = 0;
+    }
+  }
 };
 
 class dWorldDynamicIDContainer: public dWorldSimpleIDContainer {
 protected:
-	virtual ~dWorldDynamicIDContainer() {}
+  virtual ~dWorldDynamicIDContainer() {}
 };
 
 template <class dWorldTemplateBase>
@@ -94,16 +94,68 @@ public:
 
   void quickStep(dReal stepsize)
     { dWorldQuickStep (get_id(), stepsize); }
+  void setQuickStepPreconIterations(int num)
+    { dWorldSetQuickStepPreconIterations (get_id(), num); }
   void setQuickStepNumIterations(int num)
     { dWorldSetQuickStepNumIterations (get_id(), num); }
+  int getQuickStepPreconIterations() const
+    { return dWorldGetQuickStepPreconIterations (get_id()); }
   int getQuickStepNumIterations() const
     { return dWorldGetQuickStepNumIterations (get_id()); }
+  dReal getQuickStepTolerance()
+    { return dWorldGetQuickStepTolerance (get_id()); }
+  void setQuickStepTolerance(dReal tol)
+    { dWorldSetQuickStepTolerance (get_id(), tol); }
+  void setQuickStepNumChunks (int num)
+    { dWorldSetQuickStepNumChunks (get_id(), num); }
+  void setQuickStepNumOverlap (dWorldID, int num)
+    { dWorldSetQuickStepNumOverlap (get_id(), num); }
   void setQuickStepW(dReal over_relaxation)
     { dWorldSetQuickStepW (get_id(), over_relaxation); }
   dReal getQuickStepW() const
     { return dWorldGetQuickStepW (get_id()); }
+  dReal *getQuickStepRMSError() const
+    { return dWorldGetQuickStepRMSDeltaLambda (get_id()); }
+  dReal *getQuickStepRMSConstraintResidual() const
+    { return dWorldGetQuickStepRMSConstraintResidual (get_id()); }
+  dReal getQuickStepNumContacts() const
+    { return dWorldGetQuickStepNumContacts (get_id()); }
 
-  void  setAutoDisableLinearThreshold (dReal threshold) 
+  /* experimental PGS */
+  bool getQuickStepInertiaRatioReduction() const
+    { return dWorldGetQuickStepInertiaRatioReduction (get_id()); }
+  dReal getQuickStepContactResidualSmoothing() const
+    { return dWorldGetQuickStepContactResidualSmoothing (get_id()); }
+  dReal getQuickStepContactSORScalingFactor() const
+    { return dWorldGetQuickStepContactSORScalingFactor (get_id()); }
+  bool getQuickStepThreadPositionCorrection() const
+    { return dWorldGetQuickStepThreadPositionCorrection (get_id()); }
+  bool getQuickStepExperimentalRowReordering() const
+    { return dWorldGetQuickStepExperimentalRowReordering (get_id()); }
+  dReal getQuickStepWarmStartFactor() const
+    { return dWorldGetQuickStepWarmStartFactor (get_id()); }
+  int getQuickStepExtraFrictionIterations() const
+    { return dWorldGetQuickStepExtraFrictionIterations (get_id()); }
+  int getQuickStepFrictionModel() const
+    { return dWorldGetQuickStepFrictionModel(get_id()); }
+  void setQuickStepInertiaRatioReduction(bool irr)
+    { dWorldSetQuickStepInertiaRatioReduction (get_id(), irr); }
+  void setQuickStepContactResidualSmoothing(dReal smoo)
+    { dWorldSetQuickStepContactResidualSmoothing (get_id(), smoo); }
+  void setQuickStepContactSORScalingFactor(dReal contact_sor_scale) const
+    { dWorldSetQuickStepContactSORScalingFactor (get_id(), contact_sor_scale); }
+  void setQuickStepThreadPositionCorrection(bool thread)
+    { dWorldSetQuickStepThreadPositionCorrection (get_id(), thread); }
+  void setQuickStepExperimentalRowReordering(bool order)
+    { dWorldSetQuickStepExperimentalRowReordering (get_id(), order); }
+  void setQuickStepWarmStartFactor(dReal warm)
+    { dWorldSetQuickStepWarmStartFactor (get_id(), warm); }
+  void setQuickStepExtraFrictionIterations(int iters)
+    { dWorldSetQuickStepExtraFrictionIterations (get_id(), iters); }
+  void setQuickStepFrictionModel(int fricmodel)
+    { dWorldSetQuickStepFrictionModel(get_id(), fricmodel); }
+
+  void  setAutoDisableLinearThreshold (dReal threshold)
     { dWorldSetAutoDisableLinearThreshold (get_id(), threshold); }
   dReal getAutoDisableLinearThreshold() const
     { return dWorldGetAutoDisableLinearThreshold (get_id()); }
@@ -153,30 +205,30 @@ public:
   dReal getContactSurfaceLayer() const
     { return dWorldGetContactSurfaceLayer (get_id()); }
 
-  void impulseToForce (dReal stepsize, dReal ix, dReal iy, dReal iz, 
-		       dVector3 force)
+  void impulseToForce (dReal stepsize, dReal ix, dReal iy, dReal iz,
+           dVector3 force)
     { dWorldImpulseToForce (get_id(), stepsize, ix, iy, iz, force); }
 };
 
 
 class dBodySimpleIDContainer {
 protected:
-	dBodyID _id;
+  dBodyID _id;
 
-	dBodySimpleIDContainer(): _id(0) {}
-	~dBodySimpleIDContainer() { destroy(); }
+  dBodySimpleIDContainer(): _id(0) {}
+  ~dBodySimpleIDContainer() { destroy(); }
 
-	void destroy() { 
-		if (_id) {
-			dBodyDestroy(_id); 
-			_id = 0;
-		}
-	}
+  void destroy() {
+    if (_id) {
+      dBodyDestroy(_id);
+      _id = 0;
+    }
+  }
 };
 
 class dBodyDynamicIDContainer: public dBodySimpleIDContainer {
 protected:
-	virtual ~dBodyDynamicIDContainer() {}
+  virtual ~dBodyDynamicIDContainer() {}
 };
 
 template <class dBodyTemplateBase, class dWorldTemplateBase>
@@ -216,6 +268,11 @@ public:
     { dBodySetData (get_id(), data); }
   void *getData() const
     { return dBodyGetData (get_id()); }
+
+  void setMinDepth (dReal min_depth)
+    { dBodySetMinDepth (get_id(), min_depth); }
+  void setMaxVel (dReal max_vel)
+    { dBodySetMaxVel (get_id(), max_vel); }
 
   void setPosition (dReal x, dReal y, dReal z)
     { dBodySetPosition (get_id(), x, y, z); }
@@ -271,26 +328,26 @@ public:
   void addRelTorque (const dVector3 t)
     { addRelTorque (t[0], t[1], t[2]); }
 
-  void addForceAtPos (dReal fx, dReal fy, dReal fz, 
-		      dReal px, dReal py, dReal pz)
+  void addForceAtPos (dReal fx, dReal fy, dReal fz,
+          dReal px, dReal py, dReal pz)
     { dBodyAddForceAtPos (get_id(), fx, fy, fz, px, py, pz); }
   void addForceAtPos (const dVector3 f, const dVector3 p)
     { addForceAtPos (f[0], f[1], f[2], p[0], p[1], p[2]); }
 
-  void addForceAtRelPos (dReal fx, dReal fy, dReal fz, 
+  void addForceAtRelPos (dReal fx, dReal fy, dReal fz,
                          dReal px, dReal py, dReal pz)
     { dBodyAddForceAtRelPos (get_id(), fx, fy, fz, px, py, pz); }
   void addForceAtRelPos (const dVector3 f, const dVector3 p)
     { addForceAtRelPos (f[0], f[1], f[2], p[0], p[1], p[2]); }
 
-  void addRelForceAtPos (dReal fx, dReal fy, dReal fz, 
-			 dReal px, dReal py, dReal pz)
+  void addRelForceAtPos (dReal fx, dReal fy, dReal fz,
+       dReal px, dReal py, dReal pz)
     { dBodyAddRelForceAtPos (get_id(), fx, fy, fz, px, py, pz); }
   void addRelForceAtPos (const dVector3 f, const dVector3 p)
     { addRelForceAtPos (f[0], f[1], f[2], p[0], p[1], p[2]); }
 
-  void addRelForceAtRelPos (dReal fx, dReal fy, dReal fz, 
-			    dReal px, dReal py, dReal pz)
+  void addRelForceAtRelPos (dReal fx, dReal fy, dReal fz,
+          dReal px, dReal py, dReal pz)
     { dBodyAddRelForceAtRelPos (get_id(), fx, fy, fz, px, py, pz); }
   void addRelForceAtRelPos (const dVector3 f, const dVector3 p)
     { addRelForceAtRelPos (f[0], f[1], f[2], p[0], p[1], p[2]); }
@@ -378,7 +435,7 @@ public:
   bool isConnectedTo (dBodyID body) const
     { return dAreConnected (get_id(), body) != 0; }
 
-  void  setAutoDisableLinearThreshold (dReal threshold) 
+  void  setAutoDisableLinearThreshold (dReal threshold)
     { dBodySetAutoDisableLinearThreshold (get_id(), threshold); }
   dReal getAutoDisableLinearThreshold() const
     { return dBodyGetAutoDisableLinearThreshold (get_id()); }
@@ -435,22 +492,22 @@ public:
 
 class dJointGroupSimpleIDContainer {
 protected:
-	dJointGroupID _id;
+  dJointGroupID _id;
 
-	dJointGroupSimpleIDContainer(): _id(0) {}
-	~dJointGroupSimpleIDContainer() { destroy(); }
+  dJointGroupSimpleIDContainer(): _id(0) {}
+  ~dJointGroupSimpleIDContainer() { destroy(); }
 
-	void destroy() { 
-		if (_id) {
-			dJointGroupDestroy(_id); 
-			_id = 0;
-		}
-	}
+  void destroy() {
+    if (_id) {
+      dJointGroupDestroy(_id);
+      _id = 0;
+    }
+  }
 };
 
 class dJointGroupDynamicIDContainer: public dJointGroupSimpleIDContainer {
 protected:
-	virtual ~dJointGroupDynamicIDContainer() {}
+  virtual ~dJointGroupDynamicIDContainer() {}
 };
 
 template <class dJointGroupTemplateBase>
@@ -468,7 +525,7 @@ protected:
 public:
   dJointGroupTemplate ()
     { set_id(dJointGroupCreate(0)); }
-  
+
   void create () {
     destroy();
     set_id(dJointGroupCreate(0));
@@ -488,22 +545,22 @@ public:
 
 class dJointSimpleIDContainer {
 protected:
-	dJointID _id;
+  dJointID _id;
 
-	dJointSimpleIDContainer(): _id(0) {}
-	~dJointSimpleIDContainer() { destroy(); }
+  dJointSimpleIDContainer(): _id(0) {}
+  ~dJointSimpleIDContainer() { destroy(); }
 
-	void destroy() { 
-		if (_id) {
-			dJointDestroy (_id); 
-			_id = 0;
-		}
-	}
+  void destroy() {
+    if (_id) {
+      dJointDestroy (_id);
+      _id = 0;
+    }
+  }
 };
 
 class dJointDynamicIDContainer: public dJointSimpleIDContainer {
 protected:
-	virtual ~dJointDynamicIDContainer() {}
+  virtual ~dJointDynamicIDContainer() {}
 };
 
 template <class dJointTemplateBase, class dWorldTemplateBase, class dBodyTemplateBase>
@@ -639,7 +696,7 @@ public:
   }
   void create (dWorldTemplate<dWorldTemplateBase>& world, dJointGroupID group=0)
     { create(world.id(), group); }
-  
+
   void setAnchor (dReal x, dReal y, dReal z)
     { dJointSetHingeAnchor (get_id(), x, y, z); }
   void setAnchor (const dVector3 a)
@@ -668,7 +725,7 @@ public:
   // TODO: expose params through methods
 
   void addTorque (dReal torque)
-	{ dJointAddHingeTorque(get_id(), torque); }
+  { dJointAddHingeTorque(get_id(), torque); }
 };
 
 
@@ -720,7 +777,59 @@ public:
   // TODO: expose params through methods
 
   void addForce (dReal force)
-	{ dJointAddSliderForce(get_id(), force); }
+  { dJointAddSliderForce(get_id(), force); }
+};
+
+
+template <class dJointTemplateBase, class dWorldTemplateBase, class dBodyTemplateBase>
+class dScrewJointTemplate : public dJointTemplate<dJointTemplateBase, dWorldTemplateBase, dBodyTemplateBase> {
+private:
+  // intentionally undefined, don't use these
+  dScrewJointTemplate (const dScrewJointTemplate<dJointTemplateBase, dWorldTemplateBase, dBodyTemplateBase> &);
+  void operator = (const dScrewJointTemplate<dJointTemplateBase, dWorldTemplateBase, dBodyTemplateBase> &);
+
+protected:
+  typedef dJointTemplate<dJointTemplateBase, dWorldTemplateBase, dBodyTemplateBase> dBaseTemplate;
+
+  dJointID get_id() const { return dBaseTemplate::get_id(); }
+  void set_id(dJointID value) { dBaseTemplate::set_id(value); }
+
+  void destroy() { dBaseTemplate::destroy(); }
+
+public:
+  dScrewJointTemplate() { }
+  dScrewJointTemplate (dWorldID world, dJointGroupID group=0)
+    { set_id(dJointCreateScrew(world, group)); }
+  dScrewJointTemplate (dWorldTemplate<dWorldTemplateBase>& world, dJointGroupID group=0)
+    { set_id(dJointCreateScrew(world.id(), group)); }
+
+  void create (dWorldID world, dJointGroupID group=0) {
+    destroy();
+    set_id(dJointCreateScrew(world, group));
+  }
+  void create (dWorldTemplate<dWorldTemplateBase>& world, dJointGroupID group=0)
+    { create(world.id(), group); }
+
+  void setAxis (dReal x, dReal y, dReal z)
+    { dJointSetScrewAxis (get_id(), x, y, z); }
+  void setAxis (const dVector3 a)
+    { setAxis (a[0], a[1], a[2]); }
+  void getAxis (dVector3 result) const
+    { dJointGetScrewAxis (get_id(), result); }
+
+  dReal getPosition() const
+    { return dJointGetScrewPosition (get_id()); }
+  dReal getPositionRate() const
+    { return dJointGetScrewPositionRate (get_id()); }
+
+  virtual void setParam (int parameter, dReal value)
+    { dJointSetScrewParam (get_id(), parameter, value); }
+  virtual dReal getParam (int parameter) const
+    { return dJointGetScrewParam (get_id(), parameter); }
+  // TODO: expose params through methods
+
+  void addForce (dReal force)
+  { dJointAddScrewForce(get_id(), force); }
 };
 
 
@@ -780,7 +889,7 @@ public:
   virtual dReal getParam (int parameter) const
     { return dJointGetUniversalParam (get_id(), parameter); }
   // TODO: expose params through methods
-  
+
   void getAngles(dReal *angle1, dReal *angle2) const
     { dJointGetUniversalAngles (get_id(), angle1, angle2); }
 
@@ -794,7 +903,7 @@ public:
     { return dJointGetUniversalAngle2Rate (get_id()); }
 
   void addTorques (dReal torque1, dReal torque2)
-	{ dJointAddUniversalTorques(get_id(), torque1, torque2); }
+  { dJointAddUniversalTorques(get_id(), torque1, torque2); }
 };
 
 
@@ -831,17 +940,15 @@ public:
     { dJointSetHinge2Anchor (get_id(), x, y, z); }
   void setAnchor (const dVector3 a)
     { setAnchor(a[0], a[1], a[2]); }
-  void setAxes (const dReal *axis1/*=NULL*/, const dReal *axis2/*=NULL*/)
-    {  dJointSetHinge2Axes (get_id(), axis1, axis2); }
-  ODE_API_DEPRECATED void setAxis1 (dReal x, dReal y, dReal z)
-    { dVector3 a = { x, y, z }; dJointSetHinge2Axes (get_id(), a, NULL); }
-  ODE_API_DEPRECATED void setAxis1 (const dVector3 a)
-    { dJointSetHinge2Axes (get_id(), a, NULL); }
-  ODE_API_DEPRECATED void setAxis2 (dReal x, dReal y, dReal z)
-    { dVector3 a = { x, y, z }; dJointSetHinge2Axes (get_id(), NULL, a); }
-  ODE_API_DEPRECATED void setAxis2 (const dVector3 a)
-    { dJointSetHinge2Axes (get_id(), NULL, a); }
-    
+  void setAxis1 (dReal x, dReal y, dReal z)
+    { dJointSetHinge2Axis1 (get_id(), x, y, z); }
+  void setAxis1 (const dVector3 a)
+    { setAxis1 (a[0], a[1], a[2]); }
+  void setAxis2 (dReal x, dReal y, dReal z)
+    { dJointSetHinge2Axis2 (get_id(), x, y, z); }
+  void setAxis2 (const dVector3 a)
+    { setAxis2 (a[0], a[1], a[2]); }
+
   void getAnchor (dVector3 result) const
     { dJointGetHinge2Anchor (get_id(), result); }
   void getAnchor2 (dVector3 result) const
@@ -865,7 +972,7 @@ public:
   // TODO: expose params through methods
 
   void addTorques(dReal torque1, dReal torque2)
-	{ dJointAddHinge2Torques(get_id(), torque1, torque2); }
+  { dJointAddHinge2Torques(get_id(), torque1, torque2); }
 };
 
 
@@ -1154,7 +1261,7 @@ public:
     destroy();
     set_id(dJointCreateContact(world, group, contact));
   }
-  
+
   void create (dWorldTemplate<dWorldTemplateBase>& world, dJointGroupID group, dContact *contact)
     { create(world.id(), group, contact); }
 };
@@ -1253,7 +1360,7 @@ public:
   // TODO: expose params through methods
 
   void addTorques(dReal torque1, dReal torque2, dReal torque3)
-	{ dJointAddAMotorTorques(get_id(), torque1, torque2, torque3); }
+  { dJointAddAMotorTorques(get_id(), torque1, torque2, torque3); }
 };
 
 
@@ -1334,6 +1441,7 @@ typedef dJointTemplate<dODECPP_JOINT_TEMPLATE_BASE, dODECPP_WORLD_TEMPLATE_BASE,
 typedef dBallJointTemplate<dODECPP_JOINT_TEMPLATE_BASE, dODECPP_WORLD_TEMPLATE_BASE, dODECPP_BODY_TEMPLATE_BASE> dBallJoint;
 typedef dHingeJointTemplate<dODECPP_JOINT_TEMPLATE_BASE, dODECPP_WORLD_TEMPLATE_BASE, dODECPP_BODY_TEMPLATE_BASE> dHingeJoint;
 typedef dSliderJointTemplate<dODECPP_JOINT_TEMPLATE_BASE, dODECPP_WORLD_TEMPLATE_BASE, dODECPP_BODY_TEMPLATE_BASE> dSliderJoint;
+typedef dScrewJointTemplate<dODECPP_JOINT_TEMPLATE_BASE, dODECPP_WORLD_TEMPLATE_BASE, dODECPP_BODY_TEMPLATE_BASE> dScrewJoint;
 typedef dUniversalJointTemplate<dODECPP_JOINT_TEMPLATE_BASE, dODECPP_WORLD_TEMPLATE_BASE, dODECPP_BODY_TEMPLATE_BASE> dUniversalJoint;
 typedef dHinge2JointTemplate<dODECPP_JOINT_TEMPLATE_BASE, dODECPP_WORLD_TEMPLATE_BASE, dODECPP_BODY_TEMPLATE_BASE> dHinge2Joint;
 typedef dPRJointTemplate<dODECPP_JOINT_TEMPLATE_BASE, dODECPP_WORLD_TEMPLATE_BASE, dODECPP_BODY_TEMPLATE_BASE> dPRJoint;

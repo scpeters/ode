@@ -50,7 +50,7 @@
 	//! Fast square root for floating-point values.
 	inline_ float FastSqrt(float square)
 	{
-		return sqrtf(square);
+		return sqrt(square);
 	}
 
 	//! Saturates positive to zero.

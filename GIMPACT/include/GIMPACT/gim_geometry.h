@@ -66,19 +66,6 @@ typedef GREAL quatf[4];
 
 //! Axis aligned box
 struct aabb3f{
-    aabb3f() {}
-    
-    template<typename tboundfloat>
-    aabb3f(const tboundfloat &_minX, const tboundfloat &_maxX, const tboundfloat &_minY, const tboundfloat &_maxY, const tboundfloat &_minZ, const tboundfloat &_maxZ):
-        minX((GREAL)_minX),
-        maxX((GREAL)_maxX),
-        minY((GREAL)_minY),
-        maxY((GREAL)_maxY),
-        minZ((GREAL)_minZ),
-        maxZ((GREAL)_maxZ)
-    {
-    }
-    
     GREAL minX;
     GREAL maxX;
     GREAL minY;
@@ -1513,9 +1500,9 @@ Last column is added as the position
     \
     GREAL _extend[] = {aabb.maxX-_center[0],aabb.maxY-_center[1],aabb.maxZ-_center[2]};\
     GREAL _fOrigin =  VEC_DOT(direction,_center);\
-	GREAL _fMaximumExtent = _extend[0]*fabsf(direction[0]) + \
-                            _extend[1]*fabsf(direction[1]) + \
-                            _extend[2]*fabsf(direction[2]); \
+	GREAL _fMaximumExtent = _extend[0]*static_cast<GREAL>(fabsf(direction[0])) + \
+                          _extend[1]*static_cast<GREAL>(fabsf(direction[1])) + \
+                          _extend[2]*static_cast<GREAL>(fabsf(direction[2])); \
 \
     vmin = _fOrigin - _fMaximumExtent; \
     vmax = _fOrigin + _fMaximumExtent; \
@@ -1704,7 +1691,11 @@ intersection_type must have the following values
 //! Finds the 2 smallest cartesian coordinates of a plane normal
 #define PLANE_MINOR_AXES(plane, i0, i1)\
 {\
-    GREAL A[] = {fabs(plane[0]),fabs(plane[1]),fabs(plane[2])};\
+    GREAL A[] = {\
+      static_cast<GREAL>(fabs(plane[0])),\
+      static_cast<GREAL>(fabs(plane[1])),\
+      static_cast<GREAL>(fabs(plane[2]))\
+    };\
     if(A[0]>A[1])\
 	{\
 		if(A[0]>A[2])\

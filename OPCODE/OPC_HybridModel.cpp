@@ -192,8 +192,8 @@ bool HybridModel::Build(const OPCODECREATE& create)
 		{
 			if(current->IsLeaf())
 			{
-				Internal* Data = (Internal*)user_data;
-				Data->mNbLeaves++;
+				Internal* Data2 = (Internal*)user_data;
+				Data2->mNbLeaves++;
 			}
 			return true;
 		}
@@ -203,16 +203,16 @@ bool HybridModel::Build(const OPCODECREATE& create)
 		{
 			if(current->IsLeaf())
 			{
-				Internal* Data = (Internal*)user_data;
+				Internal* Data2 = (Internal*)user_data;
 
 				// Get current leaf's box
-				Data->mLeaves[Data->mNbLeaves] = *current->GetAABB();
+				Data2->mLeaves[Data2->mNbLeaves] = *current->GetAABB();
 
 				// Setup leaf data
-				udword Index = udword((size_t(current->GetPrimitives()) - size_t(Data->mBase)) / sizeof(udword));
-				Data->mTriangles[Data->mNbLeaves].SetData(current->GetNbPrimitives(), Index);
+				udword Index = udword((size_t(current->GetPrimitives()) - size_t(Data2->mBase)) / sizeof(udword));
+				Data2->mTriangles[Data2->mNbLeaves].SetData(current->GetNbPrimitives(), Index);
 
-				Data->mNbLeaves++;
+				Data2->mNbLeaves++;
 			}
 			return true;
 		}
@@ -356,7 +356,7 @@ bool HybridModel::Refit()
 	Point Min,Max;
 	Point Min_,Max_;
 	udword Index = mTree->GetNbNodes();
-	AABBNoLeafNode* Nodes = const_cast<AABBNoLeafNode *>(static_cast<const AABBNoLeafNode *>(static_cast<AABBNoLeafTree *>(mTree)->GetNodes()));
+	AABBNoLeafNode* Nodes = (AABBNoLeafNode*)((AABBNoLeafTree*)mTree)->GetNodes();
 	while(Index--)
 	{
 		AABBNoLeafNode& Current = Nodes[Index];

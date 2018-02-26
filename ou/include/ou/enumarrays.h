@@ -32,9 +32,10 @@
 #include <ou/macros.h>
 #include <ou/platform.h>
 #include <ou/namespace.h>
+#include <ou/ou_dll.h>
 
 
-BEGIN_NAMESPACE_OU();
+BEGIN_NAMESPACE_OU()
 
 
 //////////////////////////////////////////////////////////////////////////
@@ -69,8 +70,20 @@ struct CTypeStandardLess
  *	and it is acceptable to have it as template parameter.
  */
 
+// The visibility on this class is tricky because a particular templated
+// instance is declared inside the ODE library (in odeou.cpp).
 template<typename EnumType, const EnumType EnumMax, typename ElementType, const int Instance=0, class CElementEqualType=CTypeStandardEqual<ElementType> >
-class CEnumUnsortedElementArray
+class 
+#if defined ODE_API
+  ODE_API
+#else
+  #if defined(_MSC_VER)
+    __declspec(dllimport)
+  #else
+    OU_VISIBLE
+  #endif
+#endif
+CEnumUnsortedElementArray
 {
 public:
 	_OU_CONVENTION_METHOD CEnumUnsortedElementArray()
@@ -89,7 +102,7 @@ public:
 	}
 	
 public:
-	static _OU_ALWAYSINLINE const EnumType _OU_CONVENTION_API 
+	static _OU_ALWAYSINLINE_PRE const EnumType _OU_ALWAYSINLINE_IN _OU_CONVENTION_API 
 	/*const EnumType */Decode(const ElementType &etValue)
 	{
 		const ElementType *itElementFound = FindValueSequentially(m_aetElementArray, m_aetElementArray + EnumMax, etValue);
@@ -98,7 +111,7 @@ public:
 		return etResult;
 	}
 	
-	static _OU_ALWAYSINLINE const ElementType &_OU_CONVENTION_API 
+	static _OU_ALWAYSINLINE_PRE const ElementType &_OU_ALWAYSINLINE_IN _OU_CONVENTION_API 
 	/*const ElementType &*/Encode(const EnumType &etValue)
 	{
 		OU_ASSERT(sizeof(EnumType) <= sizeof(int));
@@ -107,13 +120,13 @@ public:
 		return m_aetElementArray[etValue];
 	}
 	
-	static _OU_ALWAYSINLINE bool _OU_CONVENTION_API 
+	static _OU_ALWAYSINLINE_PRE bool _OU_ALWAYSINLINE_IN _OU_CONVENTION_API 
 	/*bool */IsValidDecode(const EnumType &etValue)
 	{
 		return etValue != EnumMax;
 	}
 	
-	static _OU_ALWAYSINLINE const ElementType *_OU_CONVENTION_API 
+	static _OU_ALWAYSINLINE_PRE const ElementType *_OU_ALWAYSINLINE_IN _OU_CONVENTION_API 
 	/*const ElementType **/GetStoragePointer()
 	{
 		return m_aetElementArray;
@@ -154,7 +167,7 @@ private:
  */
 
 template<typename EnumType, const EnumType EnumMax, typename ElementType, const int Instance=0, class CElementLessType=CTypeStandardLess<ElementType> >
-class CEnumSortedElementArray
+class OU_VISIBLE CEnumSortedElementArray
 {
 public:
 	_OU_INLINE _OU_CONVENTION_METHOD CEnumSortedElementArray()
@@ -179,7 +192,7 @@ public:
 #endif // #if !defined(NDEBUG)
 	}
 	
-	static _OU_ALWAYSINLINE const EnumType _OU_CONVENTION_API 
+	static _OU_ALWAYSINLINE_PRE const EnumType _OU_ALWAYSINLINE_IN _OU_CONVENTION_API 
 	/*const EnumType */Decode(const ElementType &etValue)
 	{
 		const CElementLessType ltElementLess = CElementLessType();
@@ -199,7 +212,7 @@ public:
 		return etResult;
 	}
 	
-	static _OU_ALWAYSINLINE const ElementType &_OU_CONVENTION_API 
+	static _OU_ALWAYSINLINE_PRE const ElementType &_OU_ALWAYSINLINE_IN _OU_CONVENTION_API 
 	/*const ElementType &*/Encode(const EnumType &etValue)
 	{
 		OU_ASSERT(sizeof(EnumType) <= sizeof(int));
@@ -208,13 +221,13 @@ public:
 		return m_aetElementArray[etValue];
 	}
 	
-	static _OU_ALWAYSINLINE bool _OU_CONVENTION_API 
+	static _OU_ALWAYSINLINE_PRE bool _OU_ALWAYSINLINE_IN _OU_CONVENTION_API 
 	/*bool */IsValidDecode(const EnumType &etValue)
 	{
 		return etValue != EnumMax;
 	}
 	
-	static _OU_ALWAYSINLINE const ElementType *_OU_CONVENTION_API 
+	static _OU_ALWAYSINLINE_PRE const ElementType *_OU_ALWAYSINLINE_IN _OU_CONVENTION_API 
 	/*const ElementType **/GetStoragePointer()
 	{
 		return m_aetElementArray;
@@ -250,7 +263,7 @@ private:
 };
 
 
-END_NAMESPACE_OU();
+END_NAMESPACE_OU()
 
 
 #endif // #ifndef __OU_ENUMARRAYS_H_INCLUDED

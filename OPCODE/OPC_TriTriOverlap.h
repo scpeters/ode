@@ -6,9 +6,9 @@
 #define SORT(a,b)			\
 	if(a>b)					\
 	{						\
-		const float c=a;	\
+		const float __c=a;	\
 		a=b;				\
-		b=c;				\
+		b=__c;				\
 	}
 
 //! Edge to edge test based on Franlin Antonio's gem: "Faster Line Segment Intersection", in Graphics Gems III, pp. 199-202
@@ -134,16 +134,16 @@ BOOL CoplanarTriTri(const Point& n, const Point& v0, const Point& v1, const Poin
 		/* here we know that d0d1<=0.0 */												\
 		A=VV1; B=(VV0 - VV1)*D1; C=(VV2 - VV1)*D1; X0=D1 - D0; X1=D1 - D2;				\
 	}																					\
-	else if(D1*D2>0.0f || D0!=0.0f)														\
+	else if(D1*D2>0.0f || !_opc_equal(D0, 0.0f))														\
 	{																					\
 		/* here we know that d0d1<=0.0 or that D0!=0.0 */								\
 		A=VV0; B=(VV1 - VV0)*D0; C=(VV2 - VV0)*D0; X0=D0 - D1; X1=D0 - D2;				\
 	}																					\
-	else if(D1!=0.0f)																	\
+	else if(!_opc_equal(D1, 0.0f))																	\
 	{																					\
 		A=VV1; B=(VV0 - VV1)*D1; C=(VV2 - VV1)*D1; X0=D1 - D0; X1=D1 - D2;				\
 	}																					\
-	else if(D2!=0.0f)																	\
+	else if(!_opc_equal(D2, 0.0f))																	\
 	{																					\
 		A=VV2; B=(VV0 - VV2)*D2; C=(VV1 - VV2)*D2; X0=D2 - D0; X1=D2 - D1;				\
 	}																					\
@@ -195,19 +195,9 @@ inline_ BOOL AABBTreeCollider::TriTriOverlap(const Point& V0, const Point& V1, c
 
 	// Coplanarity robustness check
 #ifdef OPC_TRITRI_EPSILON_TEST
-    float absd1 = FastFabs(d1), sqmagN1 = N1.SquareMagnitude();
-    if (absd1>=sqmagN1)
-    {
-		if(FastFabs(du0)<=LOCAL_EPSILON*absd1) du0 = 0.0f;
-		if(FastFabs(du1)<=LOCAL_EPSILON*absd1) du1 = 0.0f;
-		if(FastFabs(du2)<=LOCAL_EPSILON*absd1) du2 = 0.0f;
-	}
-	else
-	{
-		if(FastFabs(du0)<=LOCAL_EPSILON*FCMax2(absd1, FCMin2(sqmagN1, U0.SquareMagnitude()))) du0 = 0.0f;
-		if(FastFabs(du1)<=LOCAL_EPSILON*FCMax2(absd1, FCMin2(sqmagN1, U1.SquareMagnitude()))) du1 = 0.0f;
-		if(FastFabs(du2)<=LOCAL_EPSILON*FCMax2(absd1, FCMin2(sqmagN1, U2.SquareMagnitude()))) du2 = 0.0f;
-	}
+	if(fabsf(du0)<LOCAL_EPSILON) du0 = 0.0f;
+	if(fabsf(du1)<LOCAL_EPSILON) du1 = 0.0f;
+	if(fabsf(du2)<LOCAL_EPSILON) du2 = 0.0f;
 #endif
 	const float du0du1 = du0 * du1;
 	const float du0du2 = du0 * du2;
@@ -228,19 +218,9 @@ inline_ BOOL AABBTreeCollider::TriTriOverlap(const Point& V0, const Point& V1, c
 	float dv2 = (N2|V2) + d2;
 
 #ifdef OPC_TRITRI_EPSILON_TEST
-    float absd2 = FastFabs(d2), sqmagN2 = N2.SquareMagnitude();
-    if (absd2>=sqmagN2)
-    {
-		if(FastFabs(dv0)<=LOCAL_EPSILON*absd2) dv0 = 0.0f;
-		if(FastFabs(dv1)<=LOCAL_EPSILON*absd2) dv1 = 0.0f;
-		if(FastFabs(dv2)<=LOCAL_EPSILON*absd2) dv2 = 0.0f;
-	}
-	else
-	{
-		if(FastFabs(dv0)<=LOCAL_EPSILON*FCMax2(absd2, FCMin2(sqmagN2, V0.SquareMagnitude()))) dv0 = 0.0f;
-		if(FastFabs(dv1)<=LOCAL_EPSILON*FCMax2(absd2, FCMin2(sqmagN2, V1.SquareMagnitude()))) dv1 = 0.0f;
-		if(FastFabs(dv2)<=LOCAL_EPSILON*FCMax2(absd2, FCMin2(sqmagN2, V2.SquareMagnitude()))) dv2 = 0.0f;
-	}
+	if(fabsf(dv0)<LOCAL_EPSILON) dv0 = 0.0f;
+	if(fabsf(dv1)<LOCAL_EPSILON) dv1 = 0.0f;
+	if(fabsf(dv2)<LOCAL_EPSILON) dv2 = 0.0f;
 #endif
 
 	const float dv0dv1 = dv0 * dv1;

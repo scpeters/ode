@@ -30,43 +30,38 @@
 
 
 struct dObStack : public dBase {
-    dObStack();
-    ~dObStack();
+  struct Arena {
+    Arena *next;	// next arena in linked list
+    size_t used;		// total number of bytes used in this arena, counting
+  };			//   this header
 
-    void *alloc (sizeint num_bytes);
-    // allocate a block in the last arena, allocating a new arena if necessary.
-    // it is a runtime error if num_bytes is larger than the arena size.
+  Arena *first;		// head of the arena linked list. 0 if no arenas yet
+  Arena *last;		// arena where blocks are currently being allocated
 
-    void freeAll();
-    // free all blocks in all arenas. this does not deallocate the arenas
-    // themselves, so future alloc()s will reuse them.
+  // used for iterator
+  Arena *current_arena;
+  size_t current_ofs;
 
-    void *rewind();
-    // rewind the obstack iterator, and return the address of the first
-    // allocated block. return 0 if there are no allocated blocks.
+  dObStack();
+  ~dObStack();
 
-    void *next (sizeint num_bytes);
-    // return the address of the next allocated block. 'num_bytes' is the size
-    // of the previous block. this returns null if there are no more arenas.
-    // the sequence of 'num_bytes' parameters passed to next() during a
-    // traversal of the list must exactly match the parameters passed to alloc().
+  void *alloc (int num_bytes);
+  // allocate a block in the last arena, allocating a new arena if necessary.
+  // it is a runtime error if num_bytes is larger than the arena size.
 
-private:
-    struct Arena {
-        Arena *m_next;	// next arena in linked list
-        sizeint m_used;		// total number of bytes used in this arena, counting
-    };			//   this header
+  void freeAll();
+  // free all blocks in all arenas. this does not deallocate the arenas
+  // themselves, so future alloc()s will reuse them.
 
-private:
-    void *switch_to_arena(Arena *next_arena);
+  void *rewind();
+  // rewind the obstack iterator, and return the address of the first
+  // allocated block. return 0 if there are no allocated blocks.
 
-private:
-    Arena *m_first;		// head of the arena linked list. 0 if no arenas yet
-    Arena *m_last;		// arena where blocks are currently being allocated
-
-    // used for iterator
-    Arena *m_current_arena;
-    sizeint m_current_ofs;
+  void *next (int num_bytes);
+  // return the address of the next allocated block. 'num_bytes' is the size
+  // of the previous block. this returns null if there are no more arenas.
+  // the sequence of 'num_bytes' parameters passed to next() during a
+  // traversal of the list must exactly match the parameters passed to alloc().
 };
 
 

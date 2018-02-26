@@ -21,7 +21,6 @@
  *************************************************************************/
 
 
-#include <ode/odeconfig.h>
 #include "config.h"
 #include "fixed.h"
 #include "joint_internal.h"
@@ -32,12 +31,13 @@
 // fixed joint
 
 dxJointFixed::dxJointFixed ( dxWorld *w ) :
-    dxJoint ( w )
+        dxJoint ( w )
 {
     dSetZero ( offset, 4 );
     dSetZero ( qrel, 4 );
-    erp = world->global_erp;
-    cfm = world->global_cfm;
+    // These are now set in dxJoint constructor
+    // erp = world->global_erp;
+    // cfm = world->global_cfm;
 }
 
 
@@ -57,51 +57,57 @@ dxJointFixed::getInfo1 ( dxJoint::Info1 *info )
 
 
 void
-dxJointFixed::getInfo2 ( dReal worldFPS, dReal worldERP, 
-    int rowskip, dReal *J1, dReal *J2,
-    int pairskip, dReal *pairRhsCfm, dReal *pairLoHi, 
-    int *findex )
+dxJointFixed::getInfo2 ( dxJoint::Info2 *info )
 {
+    // If joint values of erp and cfm are negative, then ignore them.
+    // info->erp, info->cfm already have the global values from quickstep
+    if (this->erp >= 0)
+      info->erp = erp;
+    if (this->cfm >= 0)
+    {
+      info->cfm[0] = cfm;
+      info->cfm[1] = cfm;
+      info->cfm[2] = cfm;
+      info->cfm[3] = cfm;
+      info->cfm[4] = cfm;
+      info->cfm[5] = cfm;
+    }
+
+    int s = info->rowskip;
+
     // Three rows for orientation
-    setFixedOrientation ( this, worldFPS, worldERP, 
-        rowskip, J1 + dSA__MAX * rowskip, J2 + dSA__MAX * rowskip,
-        pairskip, pairRhsCfm + dSA__MAX * pairskip, qrel );
+    setFixedOrientation ( this, info, qrel, 3 );
 
     // Three rows for position.
-    // set Jacobian
-    J1[GI2_JLX] = 1;
-    J1[rowskip + GI2_JLY] = 1;
-    J1[2 * rowskip + GI2_JLZ] = 1;
-
-    dReal k = worldFPS * this->erp;
-    dxBody *b0 = node[0].body, *b1 = node[1].body;
+    // set jacobian
+    info->J1l[0] = 1;
+    info->J1l[s+1] = 1;
+    info->J1l[2*s+2] = 1;
 
     dVector3 ofs;
-    dMultiply0_331 ( ofs, b0->posr.R, offset );
-
-    if ( b1 ) {
-        dSetCrossMatrixPlus( J1 + GI2__JA_MIN, ofs, rowskip );
-
-        J2[GI2_JLX] = -1;
-        J2[rowskip + GI2_JLY] = -1;
-        J2[2 * rowskip + GI2_JLZ] = -1;
+    dMultiply0_331 ( ofs, node[0].body->posr.R, offset );
+    if ( node[1].body )
+    {
+        dSetCrossMatrixPlus( info->J1a, ofs, s );
+        info->J2l[0] = -1;
+        info->J2l[s+1] = -1;
+        info->J2l[2*s+2] = -1;
     }
 
     // set right hand side for the first three rows (linear)
-    if ( b1 ) {
-        for ( int j = 0, currPairSkip = 0; j < 3; currPairSkip += pairskip, ++j ) {
-            pairRhsCfm[currPairSkip + GI2_RHS] = k * ( b1->posr.pos[j] - b0->posr.pos[j] + ofs[j] );
-        }
-    } else {
-        for ( int j = 0, currPairSkip = 0; j < 3; currPairSkip += pairskip, ++j ) {
-            pairRhsCfm[currPairSkip + GI2_RHS] = k * ( offset[j] - b0->posr.pos[j] );
-        }
+    dReal k = info->fps * info->erp;
+    if ( node[1].body )
+    {
+        for ( int j = 0; j < 3; j++ )
+            info->c[j] = k * ( node[1].body->posr.pos[j]
+                               - node[0].body->posr.pos[j]
+                               + ofs[j] );
     }
-
-    dReal cfm = this->cfm;
-    pairRhsCfm[GI2_CFM] = cfm;
-    pairRhsCfm[pairskip + GI2_CFM] = cfm;
-    pairRhsCfm[2 * pairskip + GI2_CFM] = cfm;
+    else
+    {
+        for ( int j = 0; j < 3; j++ )
+            info->c[j] = k * ( offset[j] - node[0].body->posr.pos[j] );
+    }
 }
 
 
@@ -137,15 +143,17 @@ void dJointSetFixed ( dJointID j )
 
 void dxJointFixed::set ( int num, dReal value )
 {
-    switch ( num )
-    {
+  switch ( num )
+  {
     case dParamCFM:
-        cfm = value;
-        break;
+      cfm = value;
+      break;
     case dParamERP:
-        erp = value;
-        break;
-    }
+      erp = value;
+      break;
+    default:
+      break;
+  }
 }
 
 
@@ -188,7 +196,7 @@ dxJointFixed::type() const
 }
 
 
-sizeint
+size_t
 dxJointFixed::size() const
 {
     return sizeof ( *this );

@@ -50,14 +50,14 @@ inline bool equal(const T &_a, const T &_b,
     _distances[0] = DISTANCE_PLANE_POINT(faceplane,v1);\
     _distances[1] =  _distances[0] * DISTANCE_PLANE_POINT(faceplane,v2);\
     _distances[2] =  _distances[0] * DISTANCE_PLANE_POINT(faceplane,v3); \
-  if(_distances[1]>0.0f && _distances[2]>0.0f)\
-  {\
-      out_of_face = 1;\
-  }\
-  else\
-  {\
-      out_of_face = 0;\
-  }\
+	if(_distances[1]>0.0f && _distances[2]>0.0f)\
+	{\
+	    out_of_face = 1;\
+	}\
+	else\
+	{\
+	    out_of_face = 0;\
+	}\
 }\
 
 /* sort so that a<=b */
@@ -193,8 +193,8 @@ int coplanar_tri_tri(GIM_TRIANGLE_DATA *tri1,
 
 
 int gim_triangle_triangle_overlap(
-              GIM_TRIANGLE_DATA *tri1,
-              GIM_TRIANGLE_DATA *tri2)
+							GIM_TRIANGLE_DATA *tri1,
+							GIM_TRIANGLE_DATA *tri2)
 {
     vec3f _distances;
     char out_of_face;

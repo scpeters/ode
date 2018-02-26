@@ -21,17 +21,72 @@
  *************************************************************************/
 
 
-#include <ode/odeconfig.h>
 #include "config.h"
 #include "hinge.h"
 #include "joint_internal.h"
+
+//****************************************************************************
+// helper function: shortest_angular_distance implementation
+    
+  /*!
+   * \brief normalize_angle_positive
+   *
+   *        Normalizes the angle to be 0 to 2*M_PI
+   *        It takes and returns radians.
+   */
+  static inline double normalize_angle_positive(double angle)
+  {
+    return fmod(fmod(angle, 2.0*M_PI) + 2.0*M_PI, 2.0*M_PI);
+  }
+
+
+  /*!
+   * \brief normalize
+   *
+   * Normalizes the angle to be -M_PI circle to +M_PI circle
+   * It takes and returns radians.
+   *
+   */    
+  static inline double normalize_angle(double angle)
+  {
+    double a = normalize_angle_positive(angle);
+    if (a > M_PI)
+      a -= 2.0 *M_PI;
+    return a;
+  }
+
+    
+  /*!
+   * \function
+   * \brief shortest_angular_distance
+   *
+   * Given 2 angles, this returns the shortest angular
+   * difference.  The inputs and ouputs are of course radians.
+   *
+   * The result
+   * would always be -pi <= result <= pi.  Adding the result
+   * to "from" will always get you an equivelent angle to "to".
+   */
+    
+  static inline double shortest_angular_distance(double from, double to)
+  {
+    double result = normalize_angle_positive(normalize_angle_positive(to) - normalize_angle_positive(from));
+	
+    if (result > M_PI)
+      // If the result > 180,
+      // It's shorter the other way.
+      result = -(2.0*M_PI - result);
+	
+    return normalize_angle(result);
+  }
+
 
 
 //****************************************************************************
 // hinge
 
 dxJointHinge::dxJointHinge( dxWorld *w ) :
-    dxJoint( w )
+        dxJoint( w )
 {
     dSetZero( anchor1, 4 );
     dSetZero( anchor2, 4 );
@@ -41,6 +96,7 @@ dxJointHinge::dxJointHinge( dxWorld *w ) :
     axis2[0] = 1;
     dSetZero( qrel, 4 );
     limot.init( world );
+    cumulative_angle = 0;
 }
 
 
@@ -61,26 +117,45 @@ dxJointHinge::getInfo1( dxJoint::Info1 *info )
         info->m = 6; // powered hinge needs an extra constraint row
     else info->m = 5;
 
+    // if proper joint limits are specified
     // see if we're at a joint limit.
-    if (( limot.lostop >= -M_PI || limot.histop <= M_PI ) &&
-        limot.lostop <= limot.histop )
+    if ( limot.lostop <= limot.histop )
     {
         dReal angle = getHingeAngle( node[0].body,
-            node[1].body,
-            axis1, qrel );
-        if ( limot.testRotationalLimit( angle ) )
+                                     node[1].body,
+                                     axis1, qrel );
+        // from angle, update cumulative_angle, which does not wrap
+        cumulative_angle = cumulative_angle + shortest_angular_distance(cumulative_angle,angle);
+
+        if ( limot.testRotationalLimit( cumulative_angle ) )
             info->m = 6;
     }
+    // joint damping
+    if ( use_damping )
+      info->m = 6;
 }
 
 
-void dxJointHinge::getInfo2( dReal worldFPS, dReal worldERP, 
-    int rowskip, dReal *J1, dReal *J2,
-    int pairskip, dReal *pairRhsCfm, dReal *pairLoHi, 
-    int *findex )
+void
+dxJointHinge::getInfo2( dxJoint::Info2 *info )
 {
+    // Added by OSRF
+    // If joint values of erp and cfm are negative, then ignore them.
+    // info->erp, info->cfm already have the global values from quickstep
+    if (this->erp >= 0)
+      info->erp = erp;
+    if (this->cfm >= 0)
+    {
+      info->cfm[0] = cfm;
+      info->cfm[1] = cfm;
+      info->cfm[2] = cfm;
+      info->cfm[3] = cfm;
+      info->cfm[4] = cfm;
+      info->cfm[5] = cfm;
+    }
+
     // set the three ball-and-socket rows
-    setBall( this, worldFPS, worldERP, rowskip, J1, J2, pairskip, pairRhsCfm, anchor1, anchor2 );
+    setBall( this, info, anchor1, anchor2 );
 
     // set the two hinge rows. the hinge axis should be the only unconstrained
     // rotational axis, the angular velocity of the two bodies perpendicular to
@@ -95,18 +170,24 @@ void dxJointHinge::getInfo2( dReal worldFPS, dReal worldERP,
     dMultiply0_331( ax1, node[0].body->posr.R, axis1 );
     dPlaneSpace( ax1, p, q );
 
-    dxBody *body1 = node[1].body;
-    
-    int currRowSkip = 3 * rowskip;
-    dCopyVector3(J1 + currRowSkip + GI2__JA_MIN, p);
-    if ( body1 ) {
-        dCopyNegatedVector3(J2 + currRowSkip + GI2__JA_MIN, p);
-    }
+    int s3 = 3 * info->rowskip;
+    int s4 = 4 * info->rowskip;
 
-    currRowSkip += rowskip;
-    dCopyVector3(J1 + currRowSkip + GI2__JA_MIN, q);
-    if ( body1 ) {
-        dCopyNegatedVector3(J2 + currRowSkip + GI2__JA_MIN, q);
+    info->J1a[s3+0] = p[0];
+    info->J1a[s3+1] = p[1];
+    info->J1a[s3+2] = p[2];
+    info->J1a[s4+0] = q[0];
+    info->J1a[s4+1] = q[1];
+    info->J1a[s4+2] = q[2];
+
+    if ( node[1].body )
+    {
+        info->J2a[s3+0] = -p[0];
+        info->J2a[s3+1] = -p[1];
+        info->J2a[s3+2] = -p[2];
+        info->J2a[s4+0] = -q[0];
+        info->J2a[s4+1] = -q[1];
+        info->J2a[s4+2] = -q[2];
     }
 
     // compute the right hand side of the constraint equation. set relative
@@ -125,25 +206,40 @@ void dxJointHinge::getInfo2( dReal worldFPS, dReal worldERP,
     // ax1 x ax2 is in the plane space of ax1, so we project the angular
     // velocity to p and q to find the right hand side.
 
-    dVector3 b;
-    if ( body1 ) {
-        dVector3 ax2;
-        dMultiply0_331( ax2, body1->posr.R, axis2 );
-        dCalcVectorCross3( b, ax1, ax2 );
-    } else {
-        dCalcVectorCross3( b, ax1, axis2 );
+    dVector3 ax2, b;
+    if ( node[1].body )
+    {
+        dMultiply0_331( ax2, node[1].body->posr.R, axis2 );
     }
-
-    dReal k = worldFPS * worldERP;
-    int currPairSkip = 3 * pairskip;
-    pairRhsCfm[currPairSkip + GI2_RHS] = k * dCalcVectorDot3( b, p );
-    currPairSkip += pairskip;
-    pairRhsCfm[currPairSkip + GI2_RHS] = k * dCalcVectorDot3( b, q );
+    else
+    {
+        ax2[0] = axis2[0];
+        ax2[1] = axis2[1];
+        ax2[2] = axis2[2];
+    }
+    dCalcVectorCross3( b, ax1, ax2 );
+    dReal k = info->fps * info->erp;
+    info->c[3] = k * dCalcVectorDot3( b, p );
+    info->c[4] = k * dCalcVectorDot3( b, q );
 
     // if the hinge is powered, or has joint limits, add in the stuff
-    currRowSkip += rowskip;
-    currPairSkip += pairskip;
-    limot.addLimot( this, worldFPS, J1 + currRowSkip, J2 + currRowSkip, pairRhsCfm + currPairSkip, pairLoHi + currPairSkip, ax1, 1 );
+    limot.addLimot( this, info, 5, ax1, 1 );
+
+    // joint damping
+    if (this->use_damping)
+    {
+      // added J1ad and J2ad for damping, only 1 row
+      info->J1ad[0] = ax1[0];
+      info->J1ad[1] = ax1[1];
+      info->J1ad[2] = ax1[2];
+      if ( this->node[1].body )
+      {
+        info->J2ad[0] = -ax1[0];
+        info->J2ad[1] = -ax1[1];
+        info->J2ad[2] = -ax1[2];
+      }
+      // there's no rhs for damping setup, all we want to use is the jacobian information above
+    }
 }
 
 
@@ -270,7 +366,20 @@ void dJointSetHingeParam( dJointID j, int parameter, dReal value )
     dxJointHinge* joint = ( dxJointHinge* )j;
     dUASSERT( joint, "bad joint argument" );
     checktype( joint, Hinge );
-    joint->limot.set( parameter, value );
+    switch (parameter)
+    {
+      case dParamERP:
+        joint->erp = value;
+        break;
+      case dParamCFM:
+        joint->cfm = value;
+        // dParamCFM label is also used for normal_cfm
+        joint->limot.set( parameter, value );
+        break;
+      default:
+        joint->limot.set( parameter, value );
+        break;
+    }
 }
 
 
@@ -279,7 +388,15 @@ dReal dJointGetHingeParam( dJointID j, int parameter )
     dxJointHinge* joint = ( dxJointHinge* )j;
     dUASSERT( joint, "bad joint argument" );
     checktype( joint, Hinge );
-    return joint->limot.get( parameter );
+    switch (parameter)
+    {
+      case dParamERP:
+        return joint->erp;
+      case dParamCFM:
+        return joint->cfm;
+      default:
+        return joint->limot.get( parameter );
+    }
 }
 
 
@@ -291,13 +408,15 @@ dReal dJointGetHingeAngle( dJointID j )
     if ( joint->node[0].body )
     {
         dReal ang = getHingeAngle( joint->node[0].body,
-            joint->node[1].body,
-            joint->axis1,
-            joint->qrel );
+                                   joint->node[1].body,
+                                   joint->axis1,
+                                   joint->qrel );
+        // from angle, update cumulative_angle, which does not wrap
+        joint->cumulative_angle = joint->cumulative_angle + shortest_angular_distance(joint->cumulative_angle,ang);
         if ( joint->flags & dJOINT_REVERSE )
-            return -ang;
+            return -joint->cumulative_angle;
         else
-            return ang;
+            return joint->cumulative_angle;
     }
     else return 0;
 }
@@ -351,7 +470,7 @@ dxJointHinge::type() const
 
 
 
-sizeint
+size_t
 dxJointHinge::size() const
 {
     return sizeof( *this );

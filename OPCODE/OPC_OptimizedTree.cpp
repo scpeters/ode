@@ -241,14 +241,14 @@ bool AABBCollisionTree::Build(AABBTree* tree)
 	{
 		mNbNodes = NbNodes;
 		DELETEARRAY(mNodes);
-		mNodes = new AABBCollisionNode[NbNodes];
+		mNodes = new AABBCollisionNode[mNbNodes];
 		CHECKALLOC(mNodes);
 	}
 
 	// Build the tree
 	udword CurID = 1;
 	_BuildCollisionTree(mNodes, 0, CurID, tree);
-	ASSERT(CurID==NbNodes);
+	ASSERT(CurID==mNbNodes);
 
 	return true;
 }
@@ -274,9 +274,9 @@ bool AABBCollisionTree::Refit(const MeshInterface* /*mesh_interface*/)
  *	\return		true if success
  */
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-bool AABBCollisionTree::Walk(GenericWalkingCallback callback, void* user_data) const
+bool AABBCollisionTree::Walk(GenericWalkingCallback _callback, void* _user_data) const
 {
-	if(!callback)	return false;
+	if(!_callback)	return false;
 
 	struct Local
 	{
@@ -291,7 +291,7 @@ bool AABBCollisionTree::Walk(GenericWalkingCallback callback, void* user_data) c
 			}
 		}
 	};
-	Local::_Walk(mNodes, callback, user_data);
+	Local::_Walk(mNodes, _callback, _user_data);
 	return true;
 }
 
@@ -328,23 +328,22 @@ bool AABBNoLeafTree::Build(AABBTree* tree)
 	if(!tree)	return false;
 	// Check the input tree is complete
 	udword NbTriangles	= tree->GetNbPrimitives();
-	udword NbExistingNodes		= tree->GetNbNodes();
-	if(NbExistingNodes!=NbTriangles*2-1)	return false;
+	udword NbNodes		= tree->GetNbNodes();
+	if(NbNodes!=NbTriangles*2-1)	return false;
 
-	udword NbNodes = NbTriangles-1;
 	// Get nodes
-	if(mNbNodes!=NbNodes)	// Same number of nodes => keep moving
+	if(mNbNodes!=NbTriangles-1)	// Same number of nodes => keep moving
 	{
-		mNbNodes = NbNodes;
+		mNbNodes = NbTriangles-1;
 		DELETEARRAY(mNodes);
-		mNodes = new AABBNoLeafNode[NbNodes];
+		mNodes = new AABBNoLeafNode[mNbNodes];
 		CHECKALLOC(mNodes);
 	}
 
 	// Build the tree
 	udword CurID = 1;
 	_BuildNoLeafTree(mNodes, 0, CurID, tree);
-	ASSERT(CurID==NbNodes);
+	ASSERT(CurID==mNbNodes);
 
 	return true;
 }
@@ -440,9 +439,9 @@ bool AABBNoLeafTree::Refit(const MeshInterface* mesh_interface)
  *	\return		true if success
  */
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-bool AABBNoLeafTree::Walk(GenericWalkingCallback callback, void* user_data) const
+bool AABBNoLeafTree::Walk(GenericWalkingCallback _callback, void* _user_data) const
 {
-	if(!callback)	return false;
+	if(!_callback)	return false;
 
 	struct Local
 	{
@@ -454,7 +453,7 @@ bool AABBNoLeafTree::Walk(GenericWalkingCallback callback, void* user_data) cons
 			if(!current_node->HasNegLeaf())	_Walk(current_node->GetNeg(), callback, user_data);
 		}
 	};
-	Local::_Walk(mNodes, callback, user_data);
+	Local::_Walk(mNodes, _callback, _user_data);
 	return true;
 }
 
@@ -480,15 +479,14 @@ bool AABBNoLeafTree::Walk(GenericWalkingCallback callback, void* user_data) cons
 	/* Get max values */																		\
 	Point CMax(MIN_FLOAT, MIN_FLOAT, MIN_FLOAT);												\
 	Point EMax(MIN_FLOAT, MIN_FLOAT, MIN_FLOAT);												\
-	const udword NbNodes = mNbNodes;                                                            \
-	for(udword i=0;i<NbNodes;i++)																\
+	for(udword i=0;i<mNbNodes;i++)																\
 	{																							\
-		float cx = fabsf(Nodes[i].mAABB.mCenter.x); if(cx>CMax.x)	CMax.x = cx;	            \
-		float cy = fabsf(Nodes[i].mAABB.mCenter.y); if(cy>CMax.y)	CMax.y = cy;	            \
-		float cz = fabsf(Nodes[i].mAABB.mCenter.z); if(cz>CMax.z)	CMax.z = cz;	            \
-		float ex = fabsf(Nodes[i].mAABB.mExtents.x); if(ex>EMax.x)	EMax.x = ex;	            \
-		float ey = fabsf(Nodes[i].mAABB.mExtents.y); if(ey>EMax.y)	EMax.y = ey;	            \
-		float ez = fabsf(Nodes[i].mAABB.mExtents.z); if(ez>EMax.z)	EMax.z = ez;	            \
+		if(fabsf(Nodes[i].mAABB.mCenter.x)>CMax.x)	CMax.x = fabsf(Nodes[i].mAABB.mCenter.x);	\
+		if(fabsf(Nodes[i].mAABB.mCenter.y)>CMax.y)	CMax.y = fabsf(Nodes[i].mAABB.mCenter.y);	\
+		if(fabsf(Nodes[i].mAABB.mCenter.z)>CMax.z)	CMax.z = fabsf(Nodes[i].mAABB.mCenter.z);	\
+		if(fabsf(Nodes[i].mAABB.mExtents.x)>EMax.x)	EMax.x = fabsf(Nodes[i].mAABB.mExtents.x);	\
+		if(fabsf(Nodes[i].mAABB.mExtents.y)>EMax.y)	EMax.y = fabsf(Nodes[i].mAABB.mExtents.y);	\
+		if(fabsf(Nodes[i].mAABB.mExtents.z)>EMax.z)	EMax.z = fabsf(Nodes[i].mAABB.mExtents.z);	\
 	}
 
 #define INIT_QUANTIZATION													\
@@ -498,19 +496,19 @@ bool AABBNoLeafTree::Walk(GenericWalkingCallback callback, void* user_data) cons
 																			\
 	/* Compute quantization coeffs */										\
 	Point CQuantCoeff, EQuantCoeff;											\
-	CQuantCoeff.x = CMax.x!=0.0f ? float((1<<nbc)-1)/CMax.x : 0.0f;			\
-	CQuantCoeff.y = CMax.y!=0.0f ? float((1<<nbc)-1)/CMax.y : 0.0f;			\
-	CQuantCoeff.z = CMax.z!=0.0f ? float((1<<nbc)-1)/CMax.z : 0.0f;			\
-	EQuantCoeff.x = EMax.x!=0.0f ? float((1<<nbe)-1)/EMax.x : 0.0f;			\
-	EQuantCoeff.y = EMax.y!=0.0f ? float((1<<nbe)-1)/EMax.y : 0.0f;			\
-	EQuantCoeff.z = EMax.z!=0.0f ? float((1<<nbe)-1)/EMax.z : 0.0f;			\
+	CQuantCoeff.x = !_equal(CMax.x, 0.0f) ? float((1<<nbc)-1)/CMax.x : 0.0f;\
+	CQuantCoeff.y = !_equal(CMax.y, 0.0f) ? float((1<<nbc)-1)/CMax.y : 0.0f;\
+	CQuantCoeff.z = !_equal(CMax.z, 0.0f) ? float((1<<nbc)-1)/CMax.z : 0.0f;\
+	EQuantCoeff.x = !_equal(EMax.x, 0.0f) ? float((1<<nbe)-1)/EMax.x : 0.0f;\
+	EQuantCoeff.y = !_equal(EMax.y, 0.0f) ? float((1<<nbe)-1)/EMax.y : 0.0f;\
+	EQuantCoeff.z = !_equal(EMax.z, 0.0f) ? float((1<<nbe)-1)/EMax.z : 0.0f;\
 	/* Compute and save dequantization coeffs */							\
-	mCenterCoeff.x = CQuantCoeff.x!=0.0f ? 1.0f / CQuantCoeff.x : 0.0f;		\
-	mCenterCoeff.y = CQuantCoeff.y!=0.0f ? 1.0f / CQuantCoeff.y : 0.0f;		\
-	mCenterCoeff.z = CQuantCoeff.z!=0.0f ? 1.0f / CQuantCoeff.z : 0.0f;		\
-	mExtentsCoeff.x = EQuantCoeff.x!=0.0f ? 1.0f / EQuantCoeff.x : 0.0f;	\
-	mExtentsCoeff.y = EQuantCoeff.y!=0.0f ? 1.0f / EQuantCoeff.y : 0.0f;	\
-	mExtentsCoeff.z = EQuantCoeff.z!=0.0f ? 1.0f / EQuantCoeff.z : 0.0f;	\
+	mCenterCoeff.x =  !_equal(CQuantCoeff.x, 0.0f) ? 1.0f / CQuantCoeff.x : 0.0f;\
+	mCenterCoeff.y =  !_equal(CQuantCoeff.y, 0.0f) ? 1.0f / CQuantCoeff.y : 0.0f;\
+	mCenterCoeff.z =  !_equal(CQuantCoeff.z, 0.0f) ? 1.0f / CQuantCoeff.z : 0.0f;\
+	mExtentsCoeff.x = !_equal(EQuantCoeff.x, 0.0f) ? 1.0f / EQuantCoeff.x : 0.0f;\
+	mExtentsCoeff.y = !_equal(EQuantCoeff.y, 0.0f) ? 1.0f / EQuantCoeff.y : 0.0f;\
+	mExtentsCoeff.z = !_equal(EQuantCoeff.z, 0.0f) ? 1.0f / EQuantCoeff.z : 0.0f;\
 
 #define PERFORM_QUANTIZATION														\
 	/* Quantize */																	\
@@ -535,30 +533,27 @@ bool AABBNoLeafTree::Walk(GenericWalkingCallback callback, void* user_data) cons
 			{	/* Dequantize the box extent */										\
 				float qe = float(mNodes[i].mAABB.mExtents[j]) * mExtentsCoeff[j];	\
 				/* Compare real & dequantized values */								\
-				if(qc+qe<Max[j] || qc-qe>Min[j])	                                \
-				{                                                                   \
-					mNodes[i].mAABB.mExtents[j]++;	                                \
-					/* Prevent wrapping */											\
-					if(!mNodes[i].mAABB.mExtents[j])								\
-					{																\
-						mNodes[i].mAABB.mExtents[j]=0xffff;							\
-						FixMe=false;												\
-					}																\
-				}                                                                   \
-				else FixMe=false;                                                   \
+				if(qc+qe<Max[j] || qc-qe>Min[j])	mNodes[i].mAABB.mExtents[j]++;	\
+				else								FixMe=false;					\
+				/* Prevent wrapping */												\
+				if(!mNodes[i].mAABB.mExtents[j])									\
+				{																	\
+					mNodes[i].mAABB.mExtents[j]=0xffff;								\
+					FixMe=false;													\
+				}																	\
 			}while(FixMe);															\
 		}																			\
 	}
 
-#define REMAP_DATA(member, NodeType)								\
+#define REMAP_DATA(member)											\
 	/* Fix data */													\
 	Data = Nodes[i].member;											\
 	if(!(Data&1))													\
 	{																\
 		/* Compute box number */									\
-		size_t Nb = ((NodeType *)(Data) - (Nodes));	                \
-		Data = (size_t) &mNodes[Nb];                                \
-	}                                                               \
+		size_t Nb = (Data - size_t(Nodes))/Nodes[i].GetNodeSize();	\
+		Data = (size_t) &mNodes[Nb];								\
+	}																\
 	/* ...remapped */												\
 	mNodes[i].member = Data;
 
@@ -600,7 +595,7 @@ bool AABBQuantizedTree::Build(AABBTree* tree)
 	// Get nodes
 	mNbNodes = NbNodes;
 	DELETEARRAY(mNodes);
-	AABBCollisionNode* Nodes = new AABBCollisionNode[NbNodes];
+	AABBCollisionNode* Nodes = new AABBCollisionNode[mNbNodes];
 	CHECKALLOC(Nodes);
 
 	// Build the tree
@@ -609,27 +604,24 @@ bool AABBQuantizedTree::Build(AABBTree* tree)
 
 	// Quantize
 	{
-		mNodes = new AABBQuantizedNode[NbNodes];
+		mNodes = new AABBQuantizedNode[mNbNodes];
+		CHECKALLOC(mNodes);
 
-		if (mNodes != null)
+		// Get max values
+		FIND_MAX_VALUES
+
+		// Quantization
+		INIT_QUANTIZATION
+
+		// Quantize
+		size_t Data;
+		for(udword i=0;i<mNbNodes;i++)
 		{
-			// Get max values
-			FIND_MAX_VALUES
-
-			// Quantization
-			INIT_QUANTIZATION
-
-			// Quantize
-			size_t Data;
-			for(udword i=0;i<NbNodes;i++)
-			{
-				PERFORM_QUANTIZATION
-					REMAP_DATA(mData, AABBCollisionNode)
-			}
+			PERFORM_QUANTIZATION
+			REMAP_DATA(mData)
 		}
 
 		DELETEARRAY(Nodes);
-		CHECKALLOC(mNodes);
 	}
 
 	return true;
@@ -656,9 +648,9 @@ bool AABBQuantizedTree::Refit(const MeshInterface* /*mesh_interface*/)
  *	\return		true if success
  */
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-bool AABBQuantizedTree::Walk(GenericWalkingCallback callback, void* user_data) const
+bool AABBQuantizedTree::Walk(GenericWalkingCallback _callback, void* _user_data) const
 {
-	if(!callback)	return false;
+	if(!_callback)	return false;
 
 	struct Local
 	{
@@ -673,7 +665,7 @@ bool AABBQuantizedTree::Walk(GenericWalkingCallback callback, void* user_data) c
 			}
 		}
 	};
-	Local::_Walk(mNodes, callback, user_data);
+	Local::_Walk(mNodes, _callback, _user_data);
 	return true;
 }
 
@@ -711,45 +703,41 @@ bool AABBQuantizedNoLeafTree::Build(AABBTree* tree)
 	if(!tree)	return false;
 	// Check the input tree is complete
 	udword NbTriangles	= tree->GetNbPrimitives();
-	udword NbExistingNodes = tree->GetNbNodes();
-	if(NbExistingNodes!=NbTriangles*2-1)	return false;
+	udword NbNodes		= tree->GetNbNodes();
+	if(NbNodes!=NbTriangles*2-1)	return false;
 
 	// Get nodes
-	udword NbNodes = NbTriangles-1;
-	mNbNodes = NbNodes;
+	mNbNodes = NbTriangles-1;
 	DELETEARRAY(mNodes);
-	AABBNoLeafNode* Nodes = new AABBNoLeafNode[NbNodes];
+	AABBNoLeafNode* Nodes = new AABBNoLeafNode[mNbNodes];
 	CHECKALLOC(Nodes);
 
 	// Build the tree
 	udword CurID = 1;
 	_BuildNoLeafTree(Nodes, 0, CurID, tree);
-	ASSERT(CurID==NbNodes);
+	ASSERT(CurID==mNbNodes);
 
 	// Quantize
 	{
-		mNodes = new AABBQuantizedNoLeafNode[NbNodes];
+		mNodes = new AABBQuantizedNoLeafNode[mNbNodes];
+		CHECKALLOC(mNodes);
 
-		if (mNodes != null)
+		// Get max values
+		FIND_MAX_VALUES
+
+		// Quantization
+		INIT_QUANTIZATION
+
+		// Quantize
+		size_t Data;
+		for(udword i=0;i<mNbNodes;i++)
 		{
-			// Get max values
-			FIND_MAX_VALUES
-
-			// Quantization
-			INIT_QUANTIZATION
-
-			// Quantize
-			size_t Data;
-			for(udword i=0;i<NbNodes;i++)
-			{
-				PERFORM_QUANTIZATION
-				REMAP_DATA(mPosData, AABBNoLeafNode)
-				REMAP_DATA(mNegData, AABBNoLeafNode)
-			}
+			PERFORM_QUANTIZATION
+			REMAP_DATA(mPosData)
+			REMAP_DATA(mNegData)
 		}
 
 		DELETEARRAY(Nodes);
-		CHECKALLOC(mNodes);
 	}
 
 	return true;
@@ -776,9 +764,9 @@ bool AABBQuantizedNoLeafTree::Refit(const MeshInterface* /*mesh_interface*/)
  *	\return		true if success
  */
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-bool AABBQuantizedNoLeafTree::Walk(GenericWalkingCallback callback, void* user_data) const
+bool AABBQuantizedNoLeafTree::Walk(GenericWalkingCallback _callback, void* _user_data) const
 {
-	if(!callback)	return false;
+	if(!_callback)	return false;
 
 	struct Local
 	{
@@ -790,6 +778,6 @@ bool AABBQuantizedNoLeafTree::Walk(GenericWalkingCallback callback, void* user_d
 			if(!current_node->HasNegLeaf())	_Walk(current_node->GetNeg(), callback, user_data);
 		}
 	};
-	Local::_Walk(mNodes, callback, user_data);
+	Local::_Walk(mNodes, _callback, _user_data);
 	return true;
 }

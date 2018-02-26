@@ -21,7 +21,6 @@
  *************************************************************************/
 
 
-#include <ode/odeconfig.h>
 #include "config.h"
 #include "lmotor.h"
 #include "joint_internal.h"
@@ -30,7 +29,7 @@
 //****************************************************************************
 // lmotor joint
 dxJointLMotor::dxJointLMotor( dxWorld *w ) :
-    dxJoint( w )
+        dxJoint( w )
 {
     int i;
     num = 0;
@@ -87,26 +86,22 @@ dxJointLMotor::getInfo1( dxJoint::Info1 *info )
 }
 
 void
-dxJointLMotor::getInfo2( dReal worldFPS, dReal /*worldERP*/, 
-    int rowskip, dReal *J1, dReal *J2,
-    int pairskip, dReal *pairRhsCfm, dReal *pairLoHi, 
-    int *findex )
+dxJointLMotor::getInfo2( dxJoint::Info2 *info )
 {
+    int row = 0;
     dVector3 ax[3];
     computeGlobalAxes( ax );
 
-    int currRowSkip = 0, currPairSkip = 0;
-    for ( int i = 0; i < num; ++i ) {
-        if (limot[i].addLimot( this, worldFPS, J1 + currRowSkip, J2 + currRowSkip, pairRhsCfm + currPairSkip, pairLoHi + currPairSkip, ax[i], 0 )) {
-            currRowSkip += rowskip; currPairSkip += pairskip;
-        }
+    for ( int i = 0;i < num;i++ )
+    {
+        row += limot[i].addLimot( this, info, row, ax[i], 0 );
     }
 }
 
 void dJointSetLMotorAxis( dJointID j, int anum, int rel, dReal x, dReal y, dReal z )
 {
     dxJointLMotor* joint = ( dxJointLMotor* )j;
-    //for now we are ignoring rel!
+//for now we are ignoring rel!
     dAASSERT( joint && anum >= 0 && anum <= 2 && rel >= 0 && rel <= 2 );
     checktype( joint, LMotor );
 
@@ -206,7 +201,7 @@ dxJointLMotor::type() const
 }
 
 
-sizeint
+size_t
 dxJointLMotor::size() const
 {
     return sizeof( *this );

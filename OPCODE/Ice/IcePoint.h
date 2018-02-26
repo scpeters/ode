@@ -13,7 +13,7 @@
 #define __ICEPOINT_H__
 
 	// Forward declarations
-	class HPoint;
+	class __attribute__((__may_alias__)) HPoint;
 	class Plane;
 	class Matrix3x3;
 	class Matrix4x4;
@@ -22,7 +22,7 @@
 
 	const float EPSILON2 = 1.0e-20f;
 
-	class ICEMATHS_API Point
+	class __attribute__((__may_alias__)) ICEMATHS_API  Point
 	{
 		public:
 
@@ -32,8 +32,7 @@
 //		inline_					Point(float val) : x(val), y(val), z(val)					{}
 // Removed since it introduced the nasty "Point T = *Matrix4x4.GetTrans();" bug.......
 		//! Constructor from floats
-		template<typename toffsetfloat>
-		inline_					Point(toffsetfloat xx, toffsetfloat yy, toffsetfloat zz) : x((float)xx), y((float)yy), z((float)zz)	{}
+		inline_					Point(float xx, float yy, float zz) : x(xx), y(yy), z(zz)	{}
 		//! Constructor from array
 		inline_					Point(const float f[3]) : x(f[X]), y(f[Y]), z(f[Z])		{}
 		//! Copy constructor
@@ -55,8 +54,7 @@
 				Point&			UnitRandomVector();
 
 		//! Assignment from values
-		template<typename toffsetfloat>
-		inline_	Point&			Set(toffsetfloat xx, toffsetfloat yy, toffsetfloat zz)	{ x  = (float)xx;	y  = (float)yy;	z  = (float)zz;	return *this;	}
+		inline_	Point&			Set(float xx, float yy, float zz)		{ x  = xx;		y  = yy;	z  = zz;			return *this;	}
 		//! Assignment from array
 		inline_	Point&			Set(const float f[3])					{ x  = f[X];	y  = f[Y];	z  = f[Z];			return *this;	}
 		//! Assignment from another point
@@ -271,7 +269,7 @@
 		inline_	Point&			Normalize()
 								{
 									float M = x*x + y*y + z*z;
-									if(M)
+									if(!_equal(M, 0.0))
 									{
 										M = 1.0f / sqrtf(M);
 										x *= M;

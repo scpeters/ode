@@ -180,7 +180,9 @@ bool AABBTreeNode::Subdivide(AABBTreeBuilder* builder)
 		for(udword i=0;i<mNbPrimitives;i++)
 		{
 			udword Index = mNodePrimitives[i];
-			Means += builder->GetSplittingValues(Index);
+			Means.x+=builder->GetSplittingValue(Index, 0);
+			Means.y+=builder->GetSplittingValue(Index, 1);
+			Means.z+=builder->GetSplittingValue(Index, 2);
 		}
 		Means/=float(mNbPrimitives);
 
@@ -189,9 +191,12 @@ bool AABBTreeNode::Subdivide(AABBTreeBuilder* builder)
 		for(udword i=0;i<mNbPrimitives;i++)
 		{
 			udword Index = mNodePrimitives[i];
-			Point Center = builder->GetSplittingValues(Index);
-			Point Delta = Center - Means;
-			Vars += Delta * Delta;
+			float Cx = builder->GetSplittingValue(Index, 0);
+			float Cy = builder->GetSplittingValue(Index, 1);
+			float Cz = builder->GetSplittingValue(Index, 2);
+			Vars.x += (Cx - Means.x)*(Cx - Means.x);
+			Vars.y += (Cy - Means.y)*(Cy - Means.y);
+			Vars.z += (Cz - Means.z)*(Cz - Means.z);
 		}
 		Vars/=float(mNbPrimitives-1);
 
@@ -309,8 +314,8 @@ bool AABBTreeNode::Subdivide(AABBTreeBuilder* builder)
 	builder->IncreaseCount(2);
 
 	// Assign children
-	AABBTreeNode* Pos = const_cast<AABBTreeNode *>(GetPos());
-	AABBTreeNode* Neg = const_cast<AABBTreeNode *>(GetNeg());
+	AABBTreeNode* Pos = (AABBTreeNode*)GetPos();
+	AABBTreeNode* Neg = (AABBTreeNode*)GetNeg();
 	Pos->mNodePrimitives	= &mNodePrimitives[0];
 	Pos->mNbPrimitives		= NbPos;
 	Neg->mNodePrimitives	= &mNodePrimitives[NbPos];
@@ -334,8 +339,8 @@ void AABBTreeNode::_BuildHierarchy(AABBTreeBuilder* builder)
 	Subdivide(builder);
 
 	// 3) Recurse
-	AABBTreeNode* Pos = const_cast<AABBTreeNode *>(GetPos());
-	AABBTreeNode* Neg = const_cast<AABBTreeNode *>(GetNeg());
+	AABBTreeNode* Pos = (AABBTreeNode*)GetPos();
+	AABBTreeNode* Neg = (AABBTreeNode*)GetNeg();
 	if(Pos)	Pos->_BuildHierarchy(builder);
 	if(Neg)	Neg->_BuildHierarchy(builder);
 }
@@ -352,8 +357,8 @@ void AABBTreeNode::_Refit(AABBTreeBuilder* builder)
 	builder->ComputeGlobalBox(mNodePrimitives, mNbPrimitives, mBV);
 
 	// 2) Recurse
-	AABBTreeNode* Pos = const_cast<AABBTreeNode *>(GetPos());
-	AABBTreeNode* Neg = const_cast<AABBTreeNode *>(GetNeg());
+	AABBTreeNode* Pos = (AABBTreeNode*)GetPos();
+	AABBTreeNode* Neg = (AABBTreeNode*)GetNeg();
 	if(Pos)	Pos->_Refit(builder);
 	if(Neg)	Neg->_Refit(builder);
 }
@@ -458,7 +463,7 @@ udword AABBTree::ComputeDepth() const
  *	Walks the tree, calling the user back for each node.
  */
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-udword AABBTree::Walk(WalkingCallback callback, void* user_data) const
+udword AABBTree::Walk(WalkingCallback _callback, void* _user_data) const
 {
 	// Call it without callback to compute max depth
 	udword MaxDepth = 0;
@@ -483,7 +488,7 @@ udword AABBTree::Walk(WalkingCallback callback, void* user_data) const
 			if(current_node->GetNeg())	{ _Walk(current_node->GetNeg(), max_depth, current_depth, callback, user_data);	current_depth--;	}
 		}
 	};
-	Local::_Walk(this, MaxDepth, CurrentDepth, callback, user_data);
+	Local::_Walk(this, MaxDepth, CurrentDepth, _callback, _user_data);
 	return MaxDepth;
 }
 
@@ -523,7 +528,7 @@ bool AABBTree::Refit2(AABBTreeBuilder* builder)
 
 		if(Current.IsLeaf())
 		{
-			builder->ComputeGlobalBox(Current.GetPrimitives(), Current.GetNbPrimitives(), *const_cast<AABB*>(Current.GetAABB()));
+			builder->ComputeGlobalBox(Current.GetPrimitives(), Current.GetNbPrimitives(), *(AABB*)Current.GetAABB());
 		}
 		else
 		{
@@ -536,7 +541,7 @@ bool AABBTree::Refit2(AABBTreeBuilder* builder)
 			Min.Min(Min_);
 			Max.Max(Max_);
 
-			const_cast<AABB*>(Current.GetAABB())->SetMinMax(Min, Max);
+			((AABB*)Current.GetAABB())->SetMinMax(Min, Max);
 		}
 	}
 	return true;

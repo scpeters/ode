@@ -152,7 +152,7 @@
 	|| (!_OU_NAMESPACE::CAssertionCheckCustomization::GetAssertFailureCustomHandler() \
 		|| (_OU_NAMESPACE::CAssertionCheckCustomization::GetAssertFailureCustomHandler()( \
 			_OU_NAMESPACE::AFS_CHECK,  #Condition, __FILE__, __LINE__), false)) \
-		|| (*(volatile int *)0 = 0, false))
+		|| (*(int *)0 = 0, false))
 
 
 #else // #if !defined(NDEBUG)
@@ -178,7 +178,7 @@
 #define OU_CHECK(Condition) { \
 	bool bConditionValue; \
 	assert(OU__CHECK_HANDLER(Condition)); \
-	(void)(bConditionValue || (*(volatile int *)0 = 0, false)); \
+	(void)(bConditionValue || (*(int *)0 = 0, false)); \
 }
 
 

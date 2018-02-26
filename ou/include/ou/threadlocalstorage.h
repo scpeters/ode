@@ -28,11 +28,6 @@
 #define _OU_THREADLOCALSTORAGE_H_INCLUDED
 
 
-#include <ou/features.h>
-
-
-#if _OU_FEATURE_SET >= _OU_FEATURE_SET_TLS
-
 #include <ou/typewrapper.h>
 #include <ou/macros.h>
 #include <ou/assert.h>
@@ -41,7 +36,7 @@
 
 #if _OU_TARGET_OS == _OU_TARGET_OS_WINDOWS
 
-#include <windows.h>
+#include <Windows.h>
 
 
 #else // #if _OU_TARGET_OS != _OU_TARGET_OS_WINDOWS
@@ -52,7 +47,7 @@
 #endif // #if _OU_TARGET_OS == ...
 
 
-BEGIN_NAMESPACE_OU();
+BEGIN_NAMESPACE_OU()
 
 
 //////////////////////////////////////////////////////////////////////////
@@ -93,13 +88,13 @@ private:
 	{
 		TSB_RESERVEDPOINTER_HOSTARRAY,
 			
-		TSB_RESERVEDPOINTER__MAX,
+		TSB_RESERVEDPOINTER__MAX
 	};
 
 public:
 	enum
 	{
-		TSB_LARGEST_ALIGNMENT = sizeof(void *) > sizeof(tlsvaluetype) ? sizeof(void *) : sizeof(tlsvaluetype),
+		TSB_LARGEST_ALIGNMENT = sizeof(void *) > sizeof(tlsvaluetype) ? sizeof(void *) : sizeof(tlsvaluetype)
 	};
 	
 public:
@@ -169,12 +164,12 @@ public: // Safe methods
 	 *	called anyway, there is no sense in creating additional overload without
 	 *	destructor parameter which would preserve current destructor procedure.
 	 */
-	static _OU_ALWAYSINLINE bool _OU_CONVENTION_API 
+	static _OU_ALWAYSINLINE_PRE bool _OU_ALWAYSINLINE_IN _OU_CONVENTION_API 
 	/*bool */SetStorageValue(const HTLSKEY &hskStorageKey, tlsindextype iValueIndex, tlsvaluetype vValueData, CTLSValueDestructor fnValueDestructor=NULL)
 	{
 		bool bResult;
 		
-		CTLSStorageBlock *psbStorageBlock = GetKeyStorageBlock(hskStorageKey);
+		CTLSStorageBlock *psbStorageBlock = gzGetKeyStorageBlock(hskStorageKey);
 			
 		if (psbStorageBlock)
 		{
@@ -191,12 +186,12 @@ public: // Safe methods
 		return bResult;
 	}
 
-	static _OU_ALWAYSINLINE tlsvaluetype _OU_CONVENTION_API 
-	/*tlsvaluetype */GetStorageValue(const HTLSKEY &hskStorageKey, tlsindextype iValueIndex)
+	static _OU_ALWAYSINLINE_PRE tlsvaluetype _OU_ALWAYSINLINE_IN _OU_CONVENTION_API 
+	/*tlsvaluetype */gzGetStorageValue(const HTLSKEY &hskStorageKey, tlsindextype iValueIndex)
 	{
 		tlsvaluetype vValueData = 0;
 		
-		CTLSStorageBlock *psbStorageBlock = GetKeyStorageBlock(hskStorageKey);
+		CTLSStorageBlock *psbStorageBlock = gzGetKeyStorageBlock(hskStorageKey);
 
 		if (psbStorageBlock)
 		{
@@ -207,17 +202,17 @@ public: // Safe methods
 	}
 
 public: // Unsafe methods
-	static _OU_ALWAYSINLINE void _OU_CONVENTION_API 
+	static _OU_ALWAYSINLINE_PRE void _OU_ALWAYSINLINE_IN _OU_CONVENTION_API 
 	/*void */UnsafeSetStorageValue(const HTLSKEY &hskStorageKey, tlsindextype iValueIndex, tlsvaluetype vValueData)
 	{
-		CTLSStorageBlock *psbStorageBlock = GetKeyStorageBlock(hskStorageKey);
+		CTLSStorageBlock *psbStorageBlock = gzGetKeyStorageBlock(hskStorageKey);
 		psbStorageBlock->SetValueData(iValueIndex, vValueData);
 	}
 
-	static _OU_ALWAYSINLINE tlsvaluetype _OU_CONVENTION_API 
+	static _OU_ALWAYSINLINE_PRE tlsvaluetype _OU_ALWAYSINLINE_IN _OU_CONVENTION_API 
 	/*tlsvaluetype */UnsafeGetStorageValue(const HTLSKEY &hskStorageKey, tlsindextype iValueIndex)
 	{
-		CTLSStorageBlock *psbStorageBlock = GetKeyStorageBlock(hskStorageKey);
+		CTLSStorageBlock *psbStorageBlock = gzGetKeyStorageBlock(hskStorageKey);
 		return psbStorageBlock->GetValueData(iValueIndex);
 	}
 
@@ -243,7 +238,7 @@ private:
 #endif // #if _OU_TARGET_OS == ...
 	}
 
-	static inline CTLSStorageBlock *_OU_CONVENTION_API GetKeyStorageBlock(const HTLSKEYSELECTOR &hskStorageKey)
+	static inline CTLSStorageBlock *_OU_CONVENTION_API gzGetKeyStorageBlock(const HTLSKEYSELECTOR &hskStorageKey)
 	{
 #if _OU_TARGET_OS == _OU_TARGET_OS_WINDOWS
 		
@@ -251,7 +246,7 @@ private:
 		
 		
 #else // #if _OU_TARGET_OS != _OU_TARGET_OS_WINDOWS
-		
+	
 		CTLSStorageBlock *psbStorageBlock = (CTLSStorageBlock *)pthread_getspecific((pthread_key_t)(size_t)(HTLSKEYVALUE::value_type)(*(HTLSKEYSELECTOR::value_type)hskStorageKey));
 		
 		
@@ -270,7 +265,7 @@ class CTLSInitialization
 public:
 	enum EINITIALIZATIONFLAGS
 	{
-		SIF_MANUAL_CLEANUP_ON_THREAD_EXIT	= 0x00000001,
+		SIF_MANUAL_CLEANUP_ON_THREAD_EXIT	= 0x00000001
 	};
 
 public:
@@ -288,10 +283,7 @@ private:
 };
 
 
-END_NAMESPACE_OU();
-
-
-#endif // #if _OU_FEATURE_SET >= _OU_FEATURE_SET_TLS
+END_NAMESPACE_OU()
 
 
 #endif // #ifndef _OU_THREADLOCALSTORAGE_H_INCLUDED

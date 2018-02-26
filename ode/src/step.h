@@ -25,15 +25,13 @@
 
 #include <ode/common.h>
 
-struct dxStepperProcessingCallContext;
+size_t dxEstimateStepMemoryRequirements (
+  dxBody * const *body, int nb, dxJoint * const *_joint, int _nj);
 
-
-sizeint dxEstimateStepMemoryRequirements(
-    dxBody * const *body, unsigned int nb, dxJoint * const *_joint, unsigned int _nj);
-unsigned dxEstimateStepMaxCallCount(
-    unsigned activeThreadCount, unsigned allowedThreadCount);
-
-void dxStepIsland(const dxStepperProcessingCallContext *callContext);
+void dInternalStepIsland (dxWorldProcessContext *context, dxWorld *world,
+			  dxBody * const *body, int nb,
+			  dxJoint * const *joint, int nj,
+			  dReal stepsize);
 
 
 

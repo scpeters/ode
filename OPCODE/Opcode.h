@@ -20,9 +20,8 @@
 #ifndef __OPCODE_H__
 #define __OPCODE_H__
 
-// stddef.h and stdarg.h must be included before Opcode headers 
-// as they latermay not compile being not able to find types in std::
-#include <stddef.h>
+// stdarg.h must be included before Opcode headers as it later
+// may not compile being not able to find std::va_list
 #include <stdarg.h>
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -46,15 +45,6 @@
 #define __stdcall /* */
 #endif
 #endif
-
-#if defined(__GNUC__)
-#define OPCODE_NORETURN __attribute__((noreturn))
-#elif defined(_MSC_VER)
-#define OPCODE_NORETURN __declspec(noreturn)
-#else // #if !defined(_MSC_VER)
-#define OPCODE_NORETURN
-#endif // #if !defined(__GNUC__)
-
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Compilation messages
@@ -118,8 +108,7 @@
 		#include "OPC_Picking.h"
 
 
-		typedef void (*OPCODE_AbortHandler)();
-		FUNCTION OPCODE_API bool InitOpcode(OPCODE_AbortHandler fnAbortHandler=NULL);
+		FUNCTION OPCODE_API bool InitOpcode();
 		FUNCTION OPCODE_API bool CloseOpcode();
 	}
 

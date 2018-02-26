@@ -35,7 +35,7 @@
 #include <stddef.h>
 
 
-BEGIN_NAMESPACE_OU();
+BEGIN_NAMESPACE_OU()
 
 
 //////////////////////////////////////////////////////////////////////////
@@ -69,7 +69,7 @@ enum EASSERTIONFAILURESEVERITY
 	AFS_ASSERT = AFS__MIN,
 	AFS_CHECK,
 
-	AFS__MAX,
+	AFS__MAX
 };
 
 
@@ -80,7 +80,7 @@ typedef void (_OU_CONVENTION_CALLBACK *CAssertionFailedProcedure)(EASSERTIONFAIL
 class CAssertionCheckCustomization
 {
 public:
-	static _OU_ALWAYSINLINE CAssertionFailedProcedure _OU_CONVENTION_API
+	static _OU_ALWAYSINLINE_PRE CAssertionFailedProcedure _OU_ALWAYSINLINE_IN _OU_CONVENTION_API
 	/*CAssertionFailedProcedure */GetAssertFailureCustomHandler()
 	{
 		return g_fnAssertFailureHandler;
@@ -110,19 +110,19 @@ typedef void (_OU_CONVENTION_CALLBACK *CMemoryDeallocationProcedure)(void *pv_Ex
 class CMemoryManagerCustomization
 {
 public:
-	static _OU_ALWAYSINLINE CMemoryAllocationProcedure _OU_CONVENTION_API
+	static _OU_ALWAYSINLINE_PRE CMemoryAllocationProcedure _OU_ALWAYSINLINE_IN _OU_CONVENTION_API
 	/*CMemoryAllocationProcedure */GetMemoryAllocationCustomProcedure()
 	{
 		return g_fnMemoryAllocationProcedure;
 	}
 
-	static _OU_ALWAYSINLINE CMemoryReallocationProcedure _OU_CONVENTION_API
+	static _OU_ALWAYSINLINE_PRE CMemoryReallocationProcedure _OU_ALWAYSINLINE_IN _OU_CONVENTION_API
 	/*CMemoryReallocationProcedure */GetMemoryReallocationCustomProcedure()
 	{
 		return g_fnMemoryReallocationProcedure;
 	}
 
-	static _OU_ALWAYSINLINE CMemoryDeallocationProcedure _OU_CONVENTION_API
+	static _OU_ALWAYSINLINE_PRE CMemoryDeallocationProcedure _OU_ALWAYSINLINE_IN _OU_CONVENTION_API
 	/*CMemoryDeallocationProcedure */GetMemoryDeallocationCustomProcedure()
 	{
 		return g_fnMemoryDeallocationProcedure;
@@ -143,7 +143,7 @@ private:
 };
 
 
-END_NAMESPACE_OU();
+END_NAMESPACE_OU()
 
 
 #endif // #ifndef __OU_CUSTOMIZATION_H_INCLUDED

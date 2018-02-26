@@ -28,11 +28,9 @@
 #include "joint.h"
 
 #include "ball.h"
-#include "dball.h"
-#include "dhinge.h"
-#include "transmission.h"
 #include "hinge.h"
 #include "slider.h"
+#include "screw.h"
 #include "contact.h"
 #include "universal.h"
 #include "hinge2.h"

@@ -1,25 +1,3 @@
-/*************************************************************************
- *                                                                       *
- * Open Dynamics Engine, Copyright (C) 2001,2002 Russell L. Smith.       *
- * All rights reserved.  Email: russ@q12.org   Web: www.q12.org          *
- *                                                                       *
- * This library is free software; you can redistribute it and/or         *
- * modify it under the terms of EITHER:                                  *
- *   (1) The GNU Lesser General Public License as published by the Free  *
- *       Software Foundation; either version 2.1 of the License, or (at  *
- *       your option) any later version. The text of the GNU Lesser      *
- *       General Public License is included with this library in the     *
- *       file LICENSE.TXT.                                               *
- *   (2) The BSD-style license that is included with this library in     *
- *       the file LICENSE-BSD.TXT.                                       *
- *                                                                       *
- * This library is distributed in the hope that it will be useful,       *
- * but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the files    *
- * LICENSE.TXT and LICENSE-BSD.TXT for more details.                     *
- *                                                                       *
- *************************************************************************/
-
 // dHeightfield Collider
 //  Paul Cheyrou-Lagreze aka Tuan Kuranes 2006 Speed enhancements http://www.pop-3d.com
 //  Martijn Buijs 2006 http://home.planet.nl/~buijs512/
@@ -30,10 +8,10 @@
 
 #include <ode/common.h>
 #include <ode/collision.h>
+#include <ode/matrix.h>
 #include <ode/rotation.h>
+#include <ode/odemath.h>
 #include "config.h"
-#include "matrix.h"
-#include "odemath.h"
 #include "collision_kernel.h"
 #include "collision_std.h"
 #include "collision_util.h"
@@ -94,36 +72,35 @@
 //////// dxHeightfieldData /////////////////////////////////////////////////////////////
 
 // dxHeightfieldData constructor
-dxHeightfieldData::dxHeightfieldData():
-    m_fWidth( 0 ),
-    m_fDepth( 0 ),
-    m_fSampleWidth( 0 ),
-    m_fSampleDepth( 0 ),
-    m_fSampleZXAspect( 0 ),
-    m_fInvSampleWidth( 0 ),
-    m_fInvSampleDepth( 0 ),
+dxHeightfieldData::dxHeightfieldData() :	m_fWidth( 0 ),
+											m_fDepth( 0 ),
+											m_fSampleWidth( 0 ),
+											m_fSampleDepth( 0 ),
+                                            m_fSampleZXAspect( 0 ),
+											m_fInvSampleWidth( 0 ),
+											m_fInvSampleDepth( 0 ),
+											
+											m_fHalfWidth( 0 ),
+											m_fHalfDepth( 0 ),
 
-    m_fHalfWidth( 0 ),
-    m_fHalfDepth( 0 ),
-
-    m_fMinHeight( 0 ),
-    m_fMaxHeight( 0 ),
-    m_fThickness( 0 ),
-    m_fScale( 0 ),
-    m_fOffset( 0 ),
-
-    m_nWidthSamples( 0 ),
-    m_nDepthSamples( 0 ),
-    m_bCopyHeightData( 0 ),
-    m_bWrapMode( 0 ),
-    m_nGetHeightMode( 0 ),
-
-    m_pHeightData( NULL ),
-    m_pUserData( NULL ),
-
-    m_pGetHeightCallback( NULL )
+											m_fMinHeight( 0 ),
+											m_fMaxHeight( 0 ),
+											m_fThickness( 0 ),
+											m_fScale( 0 ),
+											m_fOffset( 0 ),
+											
+											m_nWidthSamples( 0 ),
+											m_nDepthSamples( 0 ),
+											m_bCopyHeightData( 0 ),
+											m_bWrapMode( 0 ),
+											m_nGetHeightMode( 0 ),
+											
+											m_pHeightData( NULL ),
+											m_pUserData( NULL ),
+											
+											m_pGetHeightCallback( NULL )
 {
-    memset( m_contacts, 0, sizeof( m_contacts ) );
+	memset( m_contacts, 0, sizeof( m_contacts ) );
 }
 
 // build Heightfield data
@@ -247,6 +224,8 @@ void dxHeightfieldData::ComputeHeightBounds()
 
         break;
 
+    default:
+        break;
     }
 
     // scale and offset
@@ -262,7 +241,7 @@ void dxHeightfieldData::ComputeHeightBounds()
 
 // returns whether point is over terrain Cell triangle?
 bool dxHeightfieldData::IsOnHeightfield2 ( const HeightFieldVertex * const CellCorner, 
-                                          const dReal * const pos,  const bool isABC) const
+    const dReal * const pos,  const bool isABC) const
 {
     // WARNING!!!
     // This function must be written in the way to make sure that every point on
@@ -378,6 +357,8 @@ dReal dxHeightfieldData::GetHeight( int x, int z )
         data_double = (double*)m_pHeightData;
         h = (dReal)( data_double[x+(z * m_nWidthSamples)] );
         break;
+    default:
+        break;
     }
 
     return (h * m_fScale) + m_fOffset;
@@ -387,8 +368,8 @@ dReal dxHeightfieldData::GetHeight( int x, int z )
 // returns height at given coordinates
 dReal dxHeightfieldData::GetHeight( dReal x, dReal z )
 {
-    dReal dnX = dFloor( x * m_fInvSampleWidth );
-    dReal dnZ = dFloor( z * m_fInvSampleDepth );
+	dReal dnX = dFloor( x * m_fInvSampleWidth );
+	dReal dnZ = dFloor( z * m_fInvSampleDepth );
 
     dReal dx = ( x - ( dnX * m_fSampleWidth ) ) * m_fInvSampleWidth;
     dReal dz = ( z - ( dnZ * m_fSampleDepth ) ) * m_fInvSampleDepth;
@@ -465,7 +446,8 @@ dxHeightfieldData::~dxHeightfieldData()
             data_double = (double*)m_pHeightData;
             delete [] data_double;
             break;
-
+        default:
+            break;
         }
     }
 }
@@ -476,21 +458,21 @@ dxHeightfieldData::~dxHeightfieldData()
 
 // dxHeightfield constructor
 dxHeightfield::dxHeightfield( dSpaceID space,
-                             dHeightfieldDataID data,
+                             dHeightfieldDataID _data,
                              int bPlaceable )			:
     dxGeom( space, bPlaceable ),
     tempPlaneBuffer(0),
-    tempPlaneInstances(0),
+	tempPlaneInstances(0),
     tempPlaneBufferSize(0),
     tempTriangleBuffer(0),
     tempTriangleBufferSize(0),
     tempHeightBuffer(0),
-    tempHeightInstances(0),
+	tempHeightInstances(0),
     tempHeightBufferSizeX(0),
     tempHeightBufferSizeZ(0)
 {
     type = dHeightfieldClass;
-    this->m_p_data = data;
+    this->m_p_data = _data;
 }
 
 
@@ -507,7 +489,7 @@ void dxHeightfield::computeAABB()
             dReal dx[6], dy[6], dz[6];
 
             // Y-axis
-            if (d->m_fMinHeight != -dInfinity)
+            if (!_dequal(d->m_fMinHeight, -dInfinity))
             {
                 dy[0] = ( final_posr->R[ 1] * d->m_fMinHeight );
                 dy[1] = ( final_posr->R[ 5] * d->m_fMinHeight );
@@ -516,12 +498,12 @@ void dxHeightfield::computeAABB()
             else
             {
                 // Multiplication is performed to obtain infinity of correct sign
-                dy[0] = ( final_posr->R[ 1] ? final_posr->R[ 1] * -dInfinity : REAL(0.0) );
-                dy[1] = ( final_posr->R[ 5] ? final_posr->R[ 5] * -dInfinity : REAL(0.0) );
-                dy[2] = ( final_posr->R[ 9] ? final_posr->R[ 9] * -dInfinity : REAL(0.0) );
+                dy[0] = (!_dequal(final_posr->R[1], 0.0) ? final_posr->R[ 1] * -dInfinity : REAL(0.0) );
+                dy[1] = (!_dequal(final_posr->R[5], 0.0) ? final_posr->R[ 5] * -dInfinity : REAL(0.0) );
+                dy[2] = (!_dequal(final_posr->R[9], 0.0) ? final_posr->R[ 9] * -dInfinity : REAL(0.0) );
             }
 
-            if (d->m_fMaxHeight != dInfinity)
+            if (!_dequal(d->m_fMaxHeight, dInfinity))
             {
                 dy[3] = ( final_posr->R[ 1] * d->m_fMaxHeight );
                 dy[4] = ( final_posr->R[ 5] * d->m_fMaxHeight );
@@ -529,9 +511,9 @@ void dxHeightfield::computeAABB()
             }
             else
             {
-                dy[3] = ( final_posr->R[ 1] ? final_posr->R[ 1] * dInfinity : REAL(0.0) );
-                dy[4] = ( final_posr->R[ 5] ? final_posr->R[ 5] * dInfinity : REAL(0.0) );
-                dy[5] = ( final_posr->R[ 9] ? final_posr->R[ 9] * dInfinity : REAL(0.0) );
+                dy[3] = (!_dequal(final_posr->R[1], 0.0) ? final_posr->R[1] * dInfinity : REAL(0.0) );
+                dy[4] = (!_dequal(final_posr->R[5], 0.0) ? final_posr->R[5] * dInfinity : REAL(0.0) );
+                dy[5] = (!_dequal(final_posr->R[9], 0.0) ? final_posr->R[9] * dInfinity : REAL(0.0) );
             }
 
 #ifdef DHEIGHTFIELD_CORNER_ORIGIN
@@ -626,65 +608,65 @@ void dxHeightfield::computeAABB()
 // dxHeightfield destructor
 dxHeightfield::~dxHeightfield()
 {
-    resetTriangleBuffer();
-    resetPlaneBuffer();
-    resetHeightBuffer();
+	resetTriangleBuffer();
+	resetPlaneBuffer();
+	resetHeightBuffer();
 }
 
-void dxHeightfield::allocateTriangleBuffer(sizeint numTri)
+void dxHeightfield::allocateTriangleBuffer(size_t numTri)
 {
-    sizeint alignedNumTri = AlignBufferSize(numTri, TEMP_TRIANGLE_BUFFER_ELEMENT_COUNT_ALIGNMENT);
-    tempTriangleBufferSize = alignedNumTri;
-    tempTriangleBuffer = new HeightFieldTriangle[alignedNumTri];
+	size_t alignedNumTri = AlignBufferSize(numTri, TEMP_TRIANGLE_BUFFER_ELEMENT_COUNT_ALIGNMENT);
+	tempTriangleBufferSize = alignedNumTri;
+	tempTriangleBuffer = new HeightFieldTriangle[alignedNumTri];
 }
 
 void dxHeightfield::resetTriangleBuffer()
 {
-    delete[] tempTriangleBuffer;
+	delete[] tempTriangleBuffer;
 }
 
-void dxHeightfield::allocatePlaneBuffer(sizeint numTri)
+void dxHeightfield::allocatePlaneBuffer(size_t numTri)
 {
-    sizeint alignedNumTri = AlignBufferSize(numTri, TEMP_PLANE_BUFFER_ELEMENT_COUNT_ALIGNMENT);
-    tempPlaneBufferSize = alignedNumTri;
-    tempPlaneBuffer = new HeightFieldPlane *[alignedNumTri];
-    tempPlaneInstances = new HeightFieldPlane[alignedNumTri];
+	size_t alignedNumTri = AlignBufferSize(numTri, TEMP_PLANE_BUFFER_ELEMENT_COUNT_ALIGNMENT);
+	tempPlaneBufferSize = alignedNumTri;
+	tempPlaneBuffer = new HeightFieldPlane *[alignedNumTri];
+	tempPlaneInstances = new HeightFieldPlane[alignedNumTri];
 
-    HeightFieldPlane *ptrPlaneMatrix = tempPlaneInstances;
-    for (sizeint indexTri = 0; indexTri != alignedNumTri; indexTri++)
-    {
-        tempPlaneBuffer[indexTri] = ptrPlaneMatrix;
-        ptrPlaneMatrix += 1;
-    }
+	HeightFieldPlane *ptrPlaneMatrix = tempPlaneInstances;
+	for (size_t indexTri = 0; indexTri != alignedNumTri; indexTri++)
+	{
+		tempPlaneBuffer[indexTri] = ptrPlaneMatrix;
+		ptrPlaneMatrix += 1;
+	}
 }
 
 void dxHeightfield::resetPlaneBuffer()
 {
-    delete[] tempPlaneInstances;
+	delete[] tempPlaneInstances;
     delete[] tempPlaneBuffer;
 }
 
-void dxHeightfield::allocateHeightBuffer(sizeint numX, sizeint numZ)
+void dxHeightfield::allocateHeightBuffer(size_t numX, size_t numZ)
 {
-    sizeint alignedNumX = AlignBufferSize(numX, TEMP_HEIGHT_BUFFER_ELEMENT_COUNT_ALIGNMENT_X);
-    sizeint alignedNumZ = AlignBufferSize(numZ, TEMP_HEIGHT_BUFFER_ELEMENT_COUNT_ALIGNMENT_Z);
-    tempHeightBufferSizeX = alignedNumX;
-    tempHeightBufferSizeZ = alignedNumZ;
-    tempHeightBuffer = new HeightFieldVertex *[alignedNumX];
-    sizeint numCells = alignedNumX * alignedNumZ;
-    tempHeightInstances = new HeightFieldVertex [numCells];
-
-    HeightFieldVertex *ptrHeightMatrix = tempHeightInstances;
-    for (sizeint indexX = 0; indexX != alignedNumX; indexX++)
-    {
-        tempHeightBuffer[indexX] = ptrHeightMatrix;
-        ptrHeightMatrix += alignedNumZ;
-    }
+	size_t alignedNumX = AlignBufferSize(numX, TEMP_HEIGHT_BUFFER_ELEMENT_COUNT_ALIGNMENT_X);
+	size_t alignedNumZ = AlignBufferSize(numZ, TEMP_HEIGHT_BUFFER_ELEMENT_COUNT_ALIGNMENT_Z);
+	tempHeightBufferSizeX = alignedNumX;
+	tempHeightBufferSizeZ = alignedNumZ;
+	tempHeightBuffer = new HeightFieldVertex *[alignedNumX];
+	size_t numCells = alignedNumX * alignedNumZ;
+	tempHeightInstances = new HeightFieldVertex [numCells];
+	
+	HeightFieldVertex *ptrHeightMatrix = tempHeightInstances;
+	for (size_t indexX = 0; indexX != alignedNumX; indexX++)
+	{
+		tempHeightBuffer[indexX] = ptrHeightMatrix;
+		ptrHeightMatrix += alignedNumZ;
+	}
 }
 
 void dxHeightfield::resetHeightBuffer()
 {
-    delete[] tempHeightInstances;
+	delete[] tempHeightInstances;
     delete[] tempHeightBuffer;
 }
 //////// Heightfield data interface ////////////////////////////////////////////////////
@@ -892,7 +874,7 @@ dGeomID dCreateHeightfield( dSpaceID space, dHeightfieldDataID data, int bPlacea
 void dGeomHeightfieldSetHeightfieldData( dGeomID g, dHeightfieldDataID d )
 {
     dxHeightfield* geom = (dxHeightfield*) g;
-    geom->m_p_data = d;
+    geom->data = d;
 }
 
 
@@ -930,13 +912,13 @@ static inline bool DescendingPlaneSort(const HeightFieldPlane * const A, const H
     return ((A->maxAAAB - B->maxAAAB) > dEpsilon);
 }
 
-void dxHeightfield::sortPlanes(const sizeint numPlanes)
+void dxHeightfield::sortPlanes(const size_t numPlanes)
 {
     bool has_swapped = true;
     do
     {
         has_swapped = false;//reset flag
-        for (sizeint i = 0; i < numPlanes - 1; i++)
+        for (size_t i = 0; i < numPlanes - 1; i++)
         {
             //if they are in the wrong order
             if (DescendingPlaneSort(tempPlaneBuffer[i], tempPlaneBuffer[i + 1]))
@@ -955,9 +937,9 @@ void dxHeightfield::sortPlanes(const sizeint numPlanes)
 }
 
 static inline dReal DistancePointToLine(const dVector3 &_point,
-                                        const dVector3 &_pt0,
-                                        const dVector3 &_Edge,
-                                        const dReal _Edgelength)
+                                         const dVector3 &_pt0,
+                                         const dVector3 &_Edge,
+                                         const dReal _Edgelength)
 {
     dVector3 v;
     dVector3Subtract(_point, _pt0, v);
@@ -977,7 +959,7 @@ int dxHeightfield::dCollideHeightfieldZone( const int minX, const int maxX, cons
                                            int flags, dContactGeom* contact, 
                                            int skip )
 {
-    dContactGeom *pContact = 0;
+	dContactGeom *pContact = 0;
     int  x, z;
     // check if not above or inside terrain first
     // while filling a heightmap partial temporary buffer
@@ -995,7 +977,7 @@ int dxHeightfield::dCollideHeightfieldZone( const int minX, const int maxX, cons
         if (tempHeightBufferSizeX < numX || tempHeightBufferSizeZ < numZ)
         {
             resetHeightBuffer();
-            allocateHeightBuffer(numX, numZ);
+			allocateHeightBuffer(numX, numZ);
         }
 
         dReal Xpos, Ypos;
@@ -1023,29 +1005,29 @@ int dxHeightfield::dCollideHeightfieldZone( const int minX, const int maxX, cons
         }
         if (minO2Height - maxY > -dEpsilon )
         {
-            //totally above heightfield
+			//totally above heightfield
             return 0;
         }
-        if (minY - maxO2Height > -dEpsilon )
-        {
-            // totally under heightfield
-            pContact = CONTACT(contact, 0);
+		if (minY - maxO2Height > -dEpsilon )
+		{
+			// totally under heightfield
+			pContact = CONTACT(contact, 0);
 
-            pContact->pos[0] = o2->final_posr->pos[0];
-            pContact->pos[1] = minY;
-            pContact->pos[2] = o2->final_posr->pos[2];
+			pContact->pos[0] = o2->final_posr->pos[0];
+			pContact->pos[1] = minY;
+			pContact->pos[2] = o2->final_posr->pos[2];
 
-            pContact->normal[0] = 0;
-            pContact->normal[1] = - 1;
-            pContact->normal[2] = 0;
+			pContact->normal[0] = 0;
+			pContact->normal[1] = - 1;
+			pContact->normal[2] = 0;
 
-            pContact->depth =  minY - maxO2Height;
+			pContact->depth =  minY - maxO2Height;
 
             pContact->side1 = -1;
             pContact->side2 = -1;
 
-            return 1;
-        }
+			return 1;
+		}
     }
     // get All Planes that could collide against.
     dColliderFn *geomRayNCollider=0;
@@ -1130,16 +1112,16 @@ int dxHeightfield::dCollideHeightfieldZone( const int minX, const int maxX, cons
         triplane[3] =  minY;
         dGeomPlaneSetNoNormalize (sliding_plane, triplane);
         // find collision and compute contact points
-        const int numTerrainContacts = geomNPlaneCollider (o2, sliding_plane, flags, contact, skip);
-        dIASSERT(numTerrainContacts <= numMaxContactsPossible);
+		const int numTerrainContacts = geomNPlaneCollider (o2, sliding_plane, flags, contact, skip);
+		dIASSERT(numTerrainContacts <= numMaxContactsPossible);
         for (i = 0; i < numTerrainContacts; i++)
         {
-            pContact = CONTACT(contact, i*skip);
+			pContact = CONTACT(contact, i*skip);
             dOPESIGN(pContact->normal, =, -, triplane);
         }
         return numTerrainContacts;
     }
-
+    
     /* -- This block is invalid as per Martijn Buijs <buijs512@planet.nl>
 
     The problem seems to be based on the erroneously assumption that if two of 
@@ -1152,81 +1134,81 @@ int dxHeightfield::dCollideHeightfieldZone( const int minX, const int maxX, cons
 
     // unique plane
     {
-    // check for very simple plane heightfield
-    dReal minXHeightDelta = dInfinity, maxXHeightDelta = - dInfinity;
-    dReal minZHeightDelta = dInfinity, maxZHeightDelta = - dInfinity;
+        // check for very simple plane heightfield
+        dReal minXHeightDelta = dInfinity, maxXHeightDelta = - dInfinity;
+        dReal minZHeightDelta = dInfinity, maxZHeightDelta = - dInfinity;
 
 
-    dReal lastXHeight = tempHeightBuffer[0][0].vertex[1];
-    for ( x_local = 1; x_local < numX; x_local++)
-    {
-    HeightFieldVertex *HeightFieldRow = tempHeightBuffer[x_local];
+        dReal lastXHeight = tempHeightBuffer[0][0].vertex[1];
+        for ( x_local = 1; x_local < numX; x_local++)
+        {
+            HeightFieldVertex *HeightFieldRow = tempHeightBuffer[x_local];
 
-    const dReal deltaX = HeightFieldRow[0].vertex[1] - lastXHeight;
+            const dReal deltaX = HeightFieldRow[0].vertex[1] - lastXHeight;
 
-    maxXHeightDelta = dMAX (maxXHeightDelta,  deltaX);
-    minXHeightDelta = dMIN (minXHeightDelta,  deltaX);
+            maxXHeightDelta = dMAX (maxXHeightDelta,  deltaX);
+            minXHeightDelta = dMIN (minXHeightDelta,  deltaX);
 
-    dReal lastZHeight = HeightFieldRow[0].vertex[1];
-    for ( z_local = 1; z_local < numZ; z_local++)
-    {
-    const dReal deltaZ = (HeightFieldRow[z_local].vertex[1] - lastZHeight);
+            dReal lastZHeight = HeightFieldRow[0].vertex[1];
+            for ( z_local = 1; z_local < numZ; z_local++)
+            {
+                const dReal deltaZ = (HeightFieldRow[z_local].vertex[1] - lastZHeight);
 
-    maxZHeightDelta = dMAX (maxZHeightDelta,  deltaZ);
-    minZHeightDelta = dMIN (minZHeightDelta,  deltaZ);
+                maxZHeightDelta = dMAX (maxZHeightDelta,  deltaZ);
+                minZHeightDelta = dMIN (minZHeightDelta,  deltaZ);
 
-    }
-    }
+            }
+        }
 
-    if (maxZHeightDelta - minZHeightDelta < dEpsilon && 
-    maxXHeightDelta - minXHeightDelta < dEpsilon )
-    {
-    // it's a single plane.
-    const dVector3 &A = tempHeightBuffer[0][0].vertex;
-    const dVector3 &B = tempHeightBuffer[1][0].vertex;
-    const dVector3 &C = tempHeightBuffer[0][1].vertex;
+        if (maxZHeightDelta - minZHeightDelta < dEpsilon && 
+            maxXHeightDelta - minXHeightDelta < dEpsilon )
+        {
+            // it's a single plane.
+            const dVector3 &A = tempHeightBuffer[0][0].vertex;
+            const dVector3 &B = tempHeightBuffer[1][0].vertex;
+            const dVector3 &C = tempHeightBuffer[0][1].vertex;
 
-    // define 2 edges and a point that will define collision plane
-    {
-    dVector3 Edge1, Edge2; 
-    dVector3Subtract(C, A, Edge1);
-    dVector3Subtract(B, A, Edge2);
-    dVector3Cross(Edge1, Edge2, triplane);
-    }
+            // define 2 edges and a point that will define collision plane
+            {
+                dVector3 Edge1, Edge2; 
+                dVector3Subtract(C, A, Edge1);
+                dVector3Subtract(B, A, Edge2);
+                dVector3Cross(Edge1, Edge2, triplane);
+            }
 
-    // Define Plane
-    // Normalize plane normal
-    const dReal dinvlength = REAL(1.0) / dVector3Length(triplane);
-    triplane[0] *= dinvlength;
-    triplane[1] *= dinvlength;
-    triplane[2] *= dinvlength;
-    // get distance to origin from plane 
-    triplane[3] = dVector3Dot(triplane, A);
+            // Define Plane
+            // Normalize plane normal
+            const dReal dinvlength = REAL(1.0) / dVector3Length(triplane);
+            triplane[0] *= dinvlength;
+            triplane[1] *= dinvlength;
+            triplane[2] *= dinvlength;
+            // get distance to origin from plane 
+            triplane[3] = dVector3Dot(triplane, A);
 
-    dGeomPlaneSetNoNormalize (sliding_plane, triplane);
-    // find collision and compute contact points
-    const int numTerrainContacts = geomNPlaneCollider (o2, sliding_plane, flags, contact, skip);
-    dIASSERT(numTerrainContacts <= numMaxContactsPossible);
-    for (i = 0; i < numTerrainContacts; i++)
-    {
-    pContact = CONTACT(contact, i*skip);
-    dOPESIGN(pContact->normal, =, -, triplane);
-    }
-    return numTerrainContacts;
-    }
+            dGeomPlaneSetNoNormalize (sliding_plane, triplane);
+            // find collision and compute contact points
+            const int numTerrainContacts = geomNPlaneCollider (o2, sliding_plane, flags, contact, skip);
+			dIASSERT(numTerrainContacts <= numMaxContactsPossible);
+            for (i = 0; i < numTerrainContacts; i++)
+            {
+				pContact = CONTACT(contact, i*skip);
+                dOPESIGN(pContact->normal, =, -, triplane);
+            }
+            return numTerrainContacts;
+        }
     }
     */
 
-    int numTerrainContacts = 0;
-    dContactGeom *PlaneContact = m_p_data->m_contacts;
-
+	int numTerrainContacts = 0;
+	dContactGeom *PlaneContact = m_p_data->m_contacts;
+	
     const unsigned int numTriMax = (maxX - minX) * (maxZ - minZ) * 2;
     if (tempTriangleBufferSize < numTriMax)
     {
         resetTriangleBuffer();
-        allocateTriangleBuffer(numTriMax);
+		allocateTriangleBuffer(numTriMax);
     }
-
+    
     // Sorting triangle/plane  resulting from heightfield zone
     // Perhaps that would be necessary in case of too much limited
     // maximum contact point...
@@ -1238,14 +1220,14 @@ int dxHeightfield::dCollideHeightfieldZone( const int minX, const int maxX, cons
     //    || o2->type == dConvexClass
     //    || o2->type == dTriMeshClass
     //    || (numMaxContacts < (int)numTriMax)       
-
+        
 
 
     // if small heightfield triangle related to O2 colliding
     // or no Triangle colliding at all.
     bool needFurtherPasses = (o2->type == dTriMeshClass);
     //compute Ratio between Triangle size and O2 aabb size
-    // no FurtherPasses are needed in ray class
+	// no FurtherPasses are needed in ray class
     if (o2->type != dRayClass  && needFurtherPasses == false)
     {
         const dReal xratio = (o2->aabb[1] - o2->aabb[0]) * m_p_data->m_fInvSampleWidth;
@@ -1279,7 +1261,7 @@ int dxHeightfield::dCollideHeightfieldZone( const int minX, const int maxX, cons
          z
     */  
     // keep only triangle that does intersect geom
-
+    
     const unsigned int maxX_local = maxX - minX;
     const unsigned int maxZ_local = maxZ - minZ;
 
@@ -1354,9 +1336,9 @@ int dxHeightfield::dCollideHeightfieldZone( const int minX, const int maxX, cons
                 (isBCollide || isCCollide)
                 &&
                 (AHeight > CHeight &&
-                AHeight > BHeight &&
-                DHeight > CHeight &&
-                DHeight > BHeight))
+                 AHeight > BHeight &&
+                 DHeight > CHeight &&
+                 DHeight > BHeight))
             {
                 // That means Edge BC is concave, therefore
                 // BC Edge and B and C vertices cannot collide
@@ -1411,7 +1393,7 @@ int dxHeightfield::dCollideHeightfieldZone( const int minX, const int maxX, cons
         if (tempPlaneBufferSize  < numTri)
         {
             resetPlaneBuffer();
-            allocatePlaneBuffer(numTri);
+			allocatePlaneBuffer(numTri);
         }
 
         unsigned int numPlanes = 0;
@@ -1467,25 +1449,25 @@ int dxHeightfield::dCollideHeightfieldZone( const int minX, const int maxX, cons
             sortPlanes(numPlanes);
 
 #if !defined(NO_CONTACT_CULLING_BY_ISONHEIGHTFIELD2)
-        /*
-        Note by Oleh_Derevenko:
-        It seems to be incorrect to limit contact count by some particular value
-        since some of them (and even all of them) may be culled in following condition.
-        However I do not see an easy way to fix this.
-        If not that culling the flags modification should be changed here and
-        additionally repeated after some contacts have been generated (in "if (didCollide)").
-        The maximum of contacts in flags would then be set to minimum of contacts
-        remaining and HEIGHTFIELDMAXCONTACTPERCELL.
-        */
-        int planeTestFlags = (flags & ~NUMC_MASK) | HEIGHTFIELDMAXCONTACTPERCELL;
-        dIASSERT((HEIGHTFIELDMAXCONTACTPERCELL & ~NUMC_MASK) == 0);
+		/*
+			Note by Oleh_Derevenko:
+			It seems to be incorrect to limit contact count by some particular value
+			since some of them (and even all of them) may be culled in following condition.
+			However I do not see an easy way to fix this.
+			If not that culling the flags modification should be changed here and
+			additionally repeated after some contacts have been generated (in "if (didCollide)").
+			The maximum of contacts in flags would then be set to minimum of contacts
+			remaining and HEIGHTFIELDMAXCONTACTPERCELL.
+		*/
+		int planeTestFlags = (flags & ~NUMC_MASK) | HEIGHTFIELDMAXCONTACTPERCELL;
+		dIASSERT((HEIGHTFIELDMAXCONTACTPERCELL & ~NUMC_MASK) == 0);
 #else // if defined(NO_CONTACT_CULLING_BY_ISONHEIGHTFIELD2)
-        int numMaxContactsPerPlane = dMIN(numMaxContactsPossible - numTerrainContacts, HEIGHTFIELDMAXCONTACTPERCELL);
-        int planeTestFlags = (flags & ~NUMC_MASK) | numMaxContactsPerPlane;
-        dIASSERT((HEIGHTFIELDMAXCONTACTPERCELL & ~NUMC_MASK) == 0);
+		int numMaxContactsPerPlane = dMIN(numMaxContactsPossible - numTerrainContacts, HEIGHTFIELDMAXCONTACTPERCELL);
+		int planeTestFlags = (flags & ~NUMC_MASK) | numMaxContactsPerPlane;
+		dIASSERT((HEIGHTFIELDMAXCONTACTPERCELL & ~NUMC_MASK) == 0);
 #endif        
-
-        for (unsigned int k = 0; k < numPlanes; k++)
+        
+		for (unsigned int k = 0; k < numPlanes; k++)
         {
             HeightFieldPlane * const itPlane = tempPlaneBuffer[k];
 
@@ -1494,45 +1476,45 @@ int dxHeightfield::dCollideHeightfieldZone( const int minX, const int maxX, cons
             //dGeomPlaneSetParams (sliding_plane, triangle_Plane[0], triangle_Plane[1], triangle_Plane[2], triangle_Plane[3]);
             // find collision and compute contact points
             bool didCollide = false;
-            const int numPlaneContacts = geomNPlaneCollider (o2, sliding_plane, planeTestFlags, PlaneContact, sizeof(dContactGeom));
-            const sizeint planeTriListSize = itPlane->trianglelistCurrentSize;
+			const int numPlaneContacts = geomNPlaneCollider (o2, sliding_plane, planeTestFlags, PlaneContact, sizeof(dContactGeom));
+			const size_t planeTriListSize = itPlane->trianglelistCurrentSize;
             for (i = 0; i < numPlaneContacts; i++)
             {
                 dContactGeom *planeCurrContact = PlaneContact + i;
                 // Check if contact point found in plane is inside Triangle.
                 const dVector3 &pCPos = planeCurrContact->pos;
-                for (sizeint b = 0; planeTriListSize > b; b++)
+                for (size_t b = 0; planeTriListSize > b; b++)
                 {  
                     if (m_p_data->IsOnHeightfield2 (itPlane->trianglelist[b]->vertices[0], 
-                        pCPos, 
-                        itPlane->trianglelist[b]->isUp))
+                                                    pCPos, 
+                                                    itPlane->trianglelist[b]->isUp))
                     {
-                        pContact = CONTACT(contact, numTerrainContacts*skip);
-                        dVector3Copy(pCPos, pContact->pos);
-                        dOPESIGN(pContact->normal, =, -, itPlane->planeDef);
-                        pContact->depth = planeCurrContact->depth;
+						pContact = CONTACT(contact, numTerrainContacts*skip);
+						dVector3Copy(pCPos, pContact->pos);
+						dOPESIGN(pContact->normal, =, -, itPlane->planeDef);
+						pContact->depth = planeCurrContact->depth;
                         pContact->side1 = planeCurrContact->side1;
                         pContact->side2 = planeCurrContact->side2;
-                        numTerrainContacts++;
-                        if ( numTerrainContacts == numMaxContactsPossible )
-                            return numTerrainContacts;
+						numTerrainContacts++;
+						if ( numTerrainContacts == numMaxContactsPossible )
+							return numTerrainContacts;
 
-                        didCollide = true;
-                        break;
-                    }
-                }
+						didCollide = true;
+						break;
+					}
+				}
             }
             if (didCollide)
             {
 #if defined(NO_CONTACT_CULLING_BY_ISONHEIGHTFIELD2)
-                /* Note by Oleh_Derevenko:
-                This code is not used - see another note above
-                */
-                numMaxContactsPerPlane = dMIN(numMaxContactsPossible - numTerrainContacts, HEIGHTFIELDMAXCONTACTPERCELL);
-                planeTestFlags = (flags & ~NUMC_MASK) | numMaxContactsPerPlane;
-                dIASSERT((HEIGHTFIELDMAXCONTACTPERCELL & ~NUMC_MASK) == 0);
+				/* Note by Oleh_Derevenko:
+					This code is not used - see another note above
+				*/
+				numMaxContactsPerPlane = dMIN(numMaxContactsPossible - numTerrainContacts, HEIGHTFIELDMAXCONTACTPERCELL);
+		        planeTestFlags = (flags & ~NUMC_MASK) | numMaxContactsPerPlane;
+		        dIASSERT((HEIGHTFIELDMAXCONTACTPERCELL & ~NUMC_MASK) == 0);
 #endif        
-                for (sizeint b = 0; planeTriListSize > b; b++)
+                for (size_t b = 0; planeTriListSize > b; b++)
                 {                      
                     // flag Triangles Vertices as collided 
                     // to prevent any collision test of those
@@ -1544,16 +1526,16 @@ int dxHeightfield::dCollideHeightfieldZone( const int minX, const int maxX, cons
             {
                 // flag triangle as not collided so that Vertices or Edge
                 // of that triangles will be checked.
-                for (sizeint b = 0; planeTriListSize > b; b++)
+                for (size_t b = 0; planeTriListSize > b; b++)
                 { 
                     itPlane->trianglelist[b]->state = false;
                 }
             }
         }
     }
+    
 
-
-
+   
     // pass2: VS triangle vertices
     if (needFurtherPasses)
     {
@@ -1561,9 +1543,9 @@ int dxHeightfield::dCollideHeightfieldZone( const int minX, const int maxX, cons
         dReal depth;
         bool vertexCollided;
 
-        // Only one contact is necessary for ray test
-        int rayTestFlags = (flags & ~NUMC_MASK) | 1;
-        dIASSERT((1 & ~NUMC_MASK) == 0);
+		// Only one contact is necessary for ray test
+		int rayTestFlags = (flags & ~NUMC_MASK) | 1;
+		dIASSERT((1 & ~NUMC_MASK) == 0);
         //
         // Find Contact Penetration Depth of each vertices
         //
@@ -1573,56 +1555,57 @@ int dxHeightfield::dCollideHeightfieldZone( const int minX, const int maxX, cons
             if (itTriangle->state == true)
                 continue;// plane triangle did already collide.
 
-            for (sizeint i = 0; i < 3; i++)
+            for (size_t ii = 0; ii < 3; ++ii)
             {
-                HeightFieldVertex *vertex = itTriangle->vertices[i];
-                if (vertex->state == true)
-                    continue;// vertice did already collide.
+              HeightFieldVertex *vertex = itTriangle->vertices[ii];
+              if (vertex->state == true)
+                continue;// vertice did already collide.
 
-                vertexCollided = false;
-                const dVector3 &triVertex = vertex->vertex;
-                if ( geomNDepthGetter )
+              vertexCollided = false;
+              const dVector3 &triVertex = vertex->vertex;
+              if (geomNDepthGetter)
+              {
+                depth = geomNDepthGetter( o2,
+                    triVertex[0], triVertex[1], triVertex[2] );
+                if (depth > dEpsilon)
+                  vertexCollided = true;
+              }
+              else
+              {
+                // We don't have a GetDepth function, so do a ray cast instead.
+                // NOTE: This isn't ideal, and a GetDepth function should be
+                // written for all geom classes.
+                tempRay.length = (minO2Height - triVertex[1]) * REAL(1000.0);
+
+                //dGeomRaySet( &tempRay, pContact->pos[0], pContact->pos[1], pContact->pos[2],
+                //    - itTriangle->Normal[0], - itTriangle->Normal[1], - itTriangle->Normal[2] );
+                dGeomRaySetNoNormalize(tempRay, triVertex, itTriangle->planeDef);
+
+                if (geomRayNCollider(&tempRay, o2, rayTestFlags,
+                                     PlaneContact, sizeof(dContactGeom)))
                 {
-                    depth = geomNDepthGetter( o2,
-                        triVertex[0], triVertex[1], triVertex[2] );
-                    if (depth > dEpsilon)
-                        vertexCollided = true;
+                  depth = PlaneContact[0].depth;
+                  vertexCollided = true;
                 }
-                else
-                {
-                    // We don't have a GetDepth function, so do a ray cast instead.
-                    // NOTE: This isn't ideal, and a GetDepth function should be
-                    // written for all geom classes.
-                    tempRay.length = (minO2Height - triVertex[1]) * REAL(1000.0);
+              }
+              if (vertexCollided)
+              {
+                pContact = CONTACT(contact, numTerrainContacts*skip);
+                //create contact using vertices
+                dVector3Copy (triVertex, pContact->pos);
+                //create contact using Plane Normal
+                dOPESIGN(pContact->normal, =, -, itTriangle->planeDef);
 
-                    //dGeomRaySet( &tempRay, pContact->pos[0], pContact->pos[1], pContact->pos[2],
-                    //    - itTriangle->Normal[0], - itTriangle->Normal[1], - itTriangle->Normal[2] );
-                    dGeomRaySetNoNormalize(tempRay, triVertex, itTriangle->planeDef);
+                pContact->depth = depth;
+                pContact->side1 = -1;
+                pContact->side2 = -1;
 
-                    if ( geomRayNCollider( &tempRay, o2, rayTestFlags, PlaneContact, sizeof( dContactGeom ) ) )
-                    {
-                        depth = PlaneContact[0].depth;
-                        vertexCollided = true;
-                    }
-                }
-                if (vertexCollided)
-                {
-                    pContact = CONTACT(contact, numTerrainContacts*skip);
-                    //create contact using vertices
-                    dVector3Copy (triVertex, pContact->pos);
-                    //create contact using Plane Normal
-                    dOPESIGN(pContact->normal, =, -, itTriangle->planeDef);
+                numTerrainContacts++;
+                if (numTerrainContacts == numMaxContactsPossible) 
+                  return numTerrainContacts;
 
-                    pContact->depth = depth;
-                    pContact->side1 = -1;
-                    pContact->side2 = -1;
-
-                    numTerrainContacts++;
-                    if ( numTerrainContacts == numMaxContactsPossible ) 
-                        return numTerrainContacts;
-
-                    vertex->state = true;
-                }
+                vertex->state = true;
+              }
             }
         }
     }
@@ -1634,9 +1617,9 @@ int dxHeightfield::dCollideHeightfieldZone( const int minX, const int maxX, cons
         dVector3 Edge;
         dxRay edgeRay(0, 1);
 
-        int numMaxContactsPerTri = dMIN(numMaxContactsPossible - numTerrainContacts, HEIGHTFIELDMAXCONTACTPERCELL);
-        int triTestFlags = (flags & ~NUMC_MASK) | numMaxContactsPerTri;
-        dIASSERT((HEIGHTFIELDMAXCONTACTPERCELL & ~NUMC_MASK) == 0);
+		int numMaxContactsPerTri = dMIN(numMaxContactsPossible - numTerrainContacts, HEIGHTFIELDMAXCONTACTPERCELL);
+		int triTestFlags = (flags & ~NUMC_MASK) | numMaxContactsPerTri;
+		dIASSERT((HEIGHTFIELDMAXCONTACTPERCELL & ~NUMC_MASK) == 0);
 
         for (unsigned int k = 0; k < numTri; k++)
         {
@@ -1645,9 +1628,9 @@ int dxHeightfield::dCollideHeightfieldZone( const int minX, const int maxX, cons
             if (itTriangle->state == true)
                 continue;// plane did already collide.
 
-            for (sizeint m = 0; m < 3; m++)
+            for (size_t m = 0; m < 3; m++)
             {
-                const sizeint next = (m + 1) % 3;
+                const size_t next = (m + 1) % 3;
                 HeightFieldVertex *vertex0 = itTriangle->vertices[m];
                 HeightFieldVertex *vertex1 = itTriangle->vertices[next];
 
@@ -1655,37 +1638,37 @@ int dxHeightfield::dCollideHeightfieldZone( const int minX, const int maxX, cons
                 // nor triangle already collided against vertices
                 if (vertex0->state == true && vertex1->state == true)
                     continue;// plane did already collide.
-
+               
                 dVector3Subtract(vertex1->vertex, vertex0->vertex, Edge);
                 edgeRay.length = dVector3Length (Edge);
                 dGeomRaySetNoNormalize(edgeRay, vertex1->vertex, Edge);
-                int prevTerrainContacts = numTerrainContacts;
-                pContact = CONTACT(contact, prevTerrainContacts*skip);
+				int prevTerrainContacts = numTerrainContacts;
+				pContact = CONTACT(contact, prevTerrainContacts*skip);
                 const int numCollision = geomRayNCollider(&edgeRay,o2,triTestFlags,pContact,skip);
-                dIASSERT(numCollision <= numMaxContactsPerTri);
+				dIASSERT(numCollision <= numMaxContactsPerTri);
+				
+				if (numCollision)
+				{
+					numTerrainContacts += numCollision;
 
-                if (numCollision)
-                {
-                    numTerrainContacts += numCollision;
+					do
+					{
+						pContact = CONTACT(contact, prevTerrainContacts*skip);
 
-                    do
-                    {
-                        pContact = CONTACT(contact, prevTerrainContacts*skip);
+						//create contact using Plane Normal
+						dOPESIGN(pContact->normal, =, -, itTriangle->planeDef);
 
-                        //create contact using Plane Normal
-                        dOPESIGN(pContact->normal, =, -, itTriangle->planeDef);
+						pContact->depth = DistancePointToLine(pContact->pos, vertex1->vertex, Edge, edgeRay.length);
+					}
+					while (++prevTerrainContacts != numTerrainContacts);
 
-                        pContact->depth = DistancePointToLine(pContact->pos, vertex1->vertex, Edge, edgeRay.length);
-                    }
-                    while (++prevTerrainContacts != numTerrainContacts);
+					if ( numTerrainContacts == numMaxContactsPossible )
+						return numTerrainContacts;
 
-                    if ( numTerrainContacts == numMaxContactsPossible )
-                        return numTerrainContacts;
-
-                    numMaxContactsPerTri = dMIN(numMaxContactsPossible - numTerrainContacts, HEIGHTFIELDMAXCONTACTPERCELL);
-                    triTestFlags = (flags & ~NUMC_MASK) | numMaxContactsPerTri;
-                    dIASSERT((HEIGHTFIELDMAXCONTACTPERCELL & ~NUMC_MASK) == 0);
-                }
+					numMaxContactsPerTri = dMIN(numMaxContactsPossible - numTerrainContacts, HEIGHTFIELDMAXCONTACTPERCELL);
+					triTestFlags = (flags & ~NUMC_MASK) | numMaxContactsPerTri;
+					dIASSERT((HEIGHTFIELDMAXCONTACTPERCELL & ~NUMC_MASK) == 0);
+				}
             }
 
             itTriangle->vertices[0]->state = true;
@@ -1706,7 +1689,7 @@ int dCollideHeightfield( dxGeom *o1, dxGeom *o2, int flags, dContactGeom* contac
     int i;
 
     // if ((flags & NUMC_MASK) == 0) -- An assertion check is made on entry
-    //	{ flags = (flags & ~NUMC_MASK) | 1; dIASSERT((1 & ~NUMC_MASK) == 0); }
+	//	{ flags = (flags & ~NUMC_MASK) | 1; dIASSERT((1 & ~NUMC_MASK) == 0); }
 
     int numMaxTerrainContacts = (flags & NUMC_MASK);
 
@@ -1785,30 +1768,30 @@ int dCollideHeightfield( dxGeom *o1, dxGeom *o2, int flags, dContactGeom* contac
             goto dCollideHeightfieldExit;
     }
 
-    { // To narrow scope of following variables
-        const dReal fInvSampleWidth = terrain->m_p_data->m_fInvSampleWidth;
-        int nMinX = (int)dFloor(dNextAfter(o2->aabb[0] * fInvSampleWidth, -dInfinity));
-        int nMaxX = (int)dCeil(dNextAfter(o2->aabb[1] * fInvSampleWidth, dInfinity));
-        const dReal fInvSampleDepth = terrain->m_p_data->m_fInvSampleDepth;
-        int nMinZ = (int)dFloor(dNextAfter(o2->aabb[4] * fInvSampleDepth, -dInfinity));
-        int nMaxZ = (int)dCeil(dNextAfter(o2->aabb[5] * fInvSampleDepth, dInfinity));
+	{ // To narrow scope of following variables
+		const dReal fInvSampleWidth = terrain->m_p_data->m_fInvSampleWidth;
+		int nMinX = (int)dFloor(dNextAfter(o2->aabb[0] * fInvSampleWidth, -dInfinity));
+		int nMaxX = (int)dCeil(dNextAfter(o2->aabb[1] * fInvSampleWidth, dInfinity));
+		const dReal fInvSampleDepth = terrain->m_p_data->m_fInvSampleDepth;
+		int nMinZ = (int)dFloor(dNextAfter(o2->aabb[4] * fInvSampleDepth, -dInfinity));
+		int nMaxZ = (int)dCeil(dNextAfter(o2->aabb[5] * fInvSampleDepth, dInfinity));
 
-        if ( !wrapped )
-        {
-            nMinX = dMAX( nMinX, 0 );
-            nMaxX = dMIN( nMaxX, terrain->m_p_data->m_nWidthSamples - 1 );
-            nMinZ = dMAX( nMinZ, 0 );
-            nMaxZ = dMIN( nMaxZ, terrain->m_p_data->m_nDepthSamples - 1 );
+		if ( !wrapped )
+		{
+			nMinX = dMAX( nMinX, 0 );
+			nMaxX = dMIN( nMaxX, terrain->m_p_data->m_nWidthSamples - 1 );
+			nMinZ = dMAX( nMinZ, 0 );
+			nMaxZ = dMIN( nMaxZ, terrain->m_p_data->m_nDepthSamples - 1 );
 
-            dIASSERT ((nMinX < nMaxX) && (nMinZ < nMaxZ));
-        }
+			dIASSERT ((nMinX < nMaxX) && (nMinZ < nMaxZ));
+		}
 
-        numTerrainOrigContacts = numTerrainContacts;
-        numTerrainContacts += terrain->dCollideHeightfieldZone(
-            nMinX,nMaxX,nMinZ,nMaxZ,o2,numMaxTerrainContacts - numTerrainContacts,
-            flags,CONTACT(contact,numTerrainContacts*skip),skip	);
-        dIASSERT( numTerrainContacts <= numMaxTerrainContacts );
-    }
+		numTerrainOrigContacts = numTerrainContacts;
+		numTerrainContacts += terrain->dCollideHeightfieldZone(
+			nMinX,nMaxX,nMinZ,nMaxZ,o2,numMaxTerrainContacts - numTerrainContacts,
+			flags,CONTACT(contact,numTerrainContacts*skip),skip	);
+		dIASSERT( numTerrainContacts <= numMaxTerrainContacts );
+	}
 
     dContactGeom *pContact;
     for ( i = numTerrainOrigContacts; i != numTerrainContacts; ++i )
@@ -1816,8 +1799,8 @@ int dCollideHeightfield( dxGeom *o1, dxGeom *o2, int flags, dContactGeom* contac
         pContact = CONTACT(contact,i*skip);
         pContact->g1 = o1;
         pContact->g2 = o2;
-        // pContact->side1 = -1; -- Oleh_Derevenko: sides must not be erased here as they are set by respective colliders during ray/plane tests 
-        // pContact->side2 = -1;
+		// pContact->side1 = -1; -- Oleh_Derevenko: sides must not be erased here as they are set by respective colliders during ray/plane tests 
+		// pContact->side2 = -1;
     }
 
 

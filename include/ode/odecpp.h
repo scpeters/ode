@@ -1,23 +1,23 @@
 /*************************************************************************
- *                                                                       *
- * Open Dynamics Engine, Copyright (C) 2001,2002 Russell L. Smith.       *
- * All rights reserved.  Email: russ@q12.org   Web: www.q12.org          *
- *                                                                       *
- * This library is free software; you can redistribute it and/or         *
- * modify it under the terms of EITHER:                                  *
+ *									 *
+ * Open Dynamics Engine, Copyright (C) 2001, 2002 Russell L. Smith.	 *
+ * All rights reserved.  Email: russ@q12.org   Web: www.q12.org 	 *
+ *									 *
+ * This library is free software; you can redistribute it and/or	 *
+ * modify it under the terms of EITHER: 				 *
  *   (1) The GNU Lesser General Public License as published by the Free  *
- *       Software Foundation; either version 2.1 of the License, or (at  *
- *       your option) any later version. The text of the GNU Lesser      *
- *       General Public License is included with this library in the     *
- *       file LICENSE.TXT.                                               *
- *   (2) The BSD-style license that is included with this library in     *
- *       the file LICENSE-BSD.TXT.                                       *
- *                                                                       *
- * This library is distributed in the hope that it will be useful,       *
- * but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the files    *
- * LICENSE.TXT and LICENSE-BSD.TXT for more details.                     *
- *                                                                       *
+ *	 Software Foundation; either version 2.1 of the License, or (at  *
+ *	 your option) any later version. The text of the GNU Lesser	 *
+ *	 General Public License is included with this library in the	 *
+ *	 file LICENSE.TXT.						 *
+ *   (2) The BSD-style license that is included with this library in	 *
+ *	 the file LICENSE-BSD.TXT.					 *
+ *									 *
+ * This library is distributed in the hope that it will be useful, 	 *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of	 *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the files	 *
+ * LICENSE.TXT and LICENSE-BSD.TXT for more details.			 *
+ *									 *
  *************************************************************************/
 
 /* C++ interface for non-collision stuff */
@@ -94,14 +94,20 @@ public:
 
   void quickStep(dReal stepsize)
     { dWorldQuickStep (get_id(), stepsize); }
+  void setQuickStepPreconIterations(int num)
+    { dWorldSetQuickStepPreconIterations (get_id(), num); }
   void setQuickStepNumIterations(int num)
     { dWorldSetQuickStepNumIterations (get_id(), num); }
+  int getQuickStepPreconIterations() const
+    { return dWorldGetQuickStepPreconIterations (get_id()); }
   int getQuickStepNumIterations() const
     { return dWorldGetQuickStepNumIterations (get_id()); }
   void setQuickStepW(dReal over_relaxation)
     { dWorldSetQuickStepW (get_id(), over_relaxation); }
   dReal getQuickStepW() const
     { return dWorldGetQuickStepW (get_id()); }
+  dReal getQuickStepRMSError() const
+    { return dWorldGetQuickStepRMSError (get_id()); }
 
   void  setAutoDisableLinearThreshold (dReal threshold) 
     { dWorldSetAutoDisableLinearThreshold (get_id(), threshold); }
@@ -216,6 +222,11 @@ public:
     { dBodySetData (get_id(), data); }
   void *getData() const
     { return dBodyGetData (get_id()); }
+
+  void setMinDepth (dReal min_depth)
+    { dBodySetMinDepth (get_id(), min_depth); }
+  void setMaxVel (dReal max_vel)
+    { dBodySetMaxVel (get_id(), max_vel); }
 
   void setPosition (dReal x, dReal y, dReal z)
     { dBodySetPosition (get_id(), x, y, z); }
@@ -725,6 +736,58 @@ public:
 
 
 template <class dJointTemplateBase, class dWorldTemplateBase, class dBodyTemplateBase>
+class dScrewJointTemplate : public dJointTemplate<dJointTemplateBase, dWorldTemplateBase, dBodyTemplateBase> {
+private:
+  // intentionally undefined, don't use these
+  dScrewJointTemplate (const dScrewJointTemplate<dJointTemplateBase, dWorldTemplateBase, dBodyTemplateBase> &);
+  void operator = (const dScrewJointTemplate<dJointTemplateBase, dWorldTemplateBase, dBodyTemplateBase> &);
+
+protected:
+  typedef dJointTemplate<dJointTemplateBase, dWorldTemplateBase, dBodyTemplateBase> dBaseTemplate;
+
+  dJointID get_id() const { return dBaseTemplate::get_id(); }
+  void set_id(dJointID value) { dBaseTemplate::set_id(value); }
+
+  void destroy() { dBaseTemplate::destroy(); }
+
+public:
+  dScrewJointTemplate() { }
+  dScrewJointTemplate (dWorldID world, dJointGroupID group=0)
+    { set_id(dJointCreateScrew(world, group)); }
+  dScrewJointTemplate (dWorldTemplate<dWorldTemplateBase>& world, dJointGroupID group=0)
+    { set_id(dJointCreateScrew(world.id(), group)); }
+
+  void create (dWorldID world, dJointGroupID group=0) {
+    destroy();
+    set_id(dJointCreateScrew(world, group));
+  }
+  void create (dWorldTemplate<dWorldTemplateBase>& world, dJointGroupID group=0)
+    { create(world.id(), group); }
+
+  void setAxis (dReal x, dReal y, dReal z)
+    { dJointSetScrewAxis (get_id(), x, y, z); }
+  void setAxis (const dVector3 a)
+    { setAxis (a[0], a[1], a[2]); }
+  void getAxis (dVector3 result) const
+    { dJointGetScrewAxis (get_id(), result); }
+
+  dReal getPosition() const
+    { return dJointGetScrewPosition (get_id()); }
+  dReal getPositionRate() const
+    { return dJointGetScrewPositionRate (get_id()); }
+
+  virtual void setParam (int parameter, dReal value)
+    { dJointSetScrewParam (get_id(), parameter, value); }
+  virtual dReal getParam (int parameter) const
+    { return dJointGetScrewParam (get_id(), parameter); }
+  // TODO: expose params through methods
+
+  void addForce (dReal force)
+	{ dJointAddScrewForce(get_id(), force); }
+};
+
+
+template <class dJointTemplateBase, class dWorldTemplateBase, class dBodyTemplateBase>
 class dUniversalJointTemplate : public dJointTemplate<dJointTemplateBase, dWorldTemplateBase, dBodyTemplateBase> {
 private:
   // intentionally undefined, don't use these
@@ -831,16 +894,14 @@ public:
     { dJointSetHinge2Anchor (get_id(), x, y, z); }
   void setAnchor (const dVector3 a)
     { setAnchor(a[0], a[1], a[2]); }
-  void setAxes (const dReal *axis1/*=NULL*/, const dReal *axis2/*=NULL*/)
-    {  dJointSetHinge2Axes (get_id(), axis1, axis2); }
-  ODE_API_DEPRECATED void setAxis1 (dReal x, dReal y, dReal z)
-    { dVector3 a = { x, y, z }; dJointSetHinge2Axes (get_id(), a, NULL); }
-  ODE_API_DEPRECATED void setAxis1 (const dVector3 a)
-    { dJointSetHinge2Axes (get_id(), a, NULL); }
-  ODE_API_DEPRECATED void setAxis2 (dReal x, dReal y, dReal z)
-    { dVector3 a = { x, y, z }; dJointSetHinge2Axes (get_id(), NULL, a); }
-  ODE_API_DEPRECATED void setAxis2 (const dVector3 a)
-    { dJointSetHinge2Axes (get_id(), NULL, a); }
+  void setAxis1 (dReal x, dReal y, dReal z)
+    { dJointSetHinge2Axis1 (get_id(), x, y, z); }
+  void setAxis1 (const dVector3 a)
+    { setAxis1 (a[0], a[1], a[2]); }
+  void setAxis2 (dReal x, dReal y, dReal z)
+    { dJointSetHinge2Axis2 (get_id(), x, y, z); }
+  void setAxis2 (const dVector3 a)
+    { setAxis2 (a[0], a[1], a[2]); }
     
   void getAnchor (dVector3 result) const
     { dJointGetHinge2Anchor (get_id(), result); }
@@ -1334,6 +1395,7 @@ typedef dJointTemplate<dODECPP_JOINT_TEMPLATE_BASE, dODECPP_WORLD_TEMPLATE_BASE,
 typedef dBallJointTemplate<dODECPP_JOINT_TEMPLATE_BASE, dODECPP_WORLD_TEMPLATE_BASE, dODECPP_BODY_TEMPLATE_BASE> dBallJoint;
 typedef dHingeJointTemplate<dODECPP_JOINT_TEMPLATE_BASE, dODECPP_WORLD_TEMPLATE_BASE, dODECPP_BODY_TEMPLATE_BASE> dHingeJoint;
 typedef dSliderJointTemplate<dODECPP_JOINT_TEMPLATE_BASE, dODECPP_WORLD_TEMPLATE_BASE, dODECPP_BODY_TEMPLATE_BASE> dSliderJoint;
+typedef dScrewJointTemplate<dODECPP_JOINT_TEMPLATE_BASE, dODECPP_WORLD_TEMPLATE_BASE, dODECPP_BODY_TEMPLATE_BASE> dScrewJoint;
 typedef dUniversalJointTemplate<dODECPP_JOINT_TEMPLATE_BASE, dODECPP_WORLD_TEMPLATE_BASE, dODECPP_BODY_TEMPLATE_BASE> dUniversalJoint;
 typedef dHinge2JointTemplate<dODECPP_JOINT_TEMPLATE_BASE, dODECPP_WORLD_TEMPLATE_BASE, dODECPP_BODY_TEMPLATE_BASE> dHinge2Joint;
 typedef dPRJointTemplate<dODECPP_JOINT_TEMPLATE_BASE, dODECPP_WORLD_TEMPLATE_BASE, dODECPP_BODY_TEMPLATE_BASE> dPRJoint;

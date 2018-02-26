@@ -83,4 +83,7 @@
 	#define CHECKALLOC(x)		if(!x) return false;
 #endif
 
+	//! Standard allocation cycle
+	#define SAFE_ALLOC(ptr, type, count)	DELETEARRAY(ptr);	ptr = new type[count];	CHECKALLOC(ptr);
+
 #endif // __ICEMEMORYMACROS_H__

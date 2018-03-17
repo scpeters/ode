@@ -166,32 +166,32 @@ struct COptData
   dReal* stack2;             // matrix stack: M^{-1}[N' T1' T2' J' Jl' Jh']
   dReal* NStack;             // N*matrix stack
 
-  COptData(int m, int ml, int mh, int nc, int nb)
+  COptData(int _m, int _ml, int _mh, int _nc, int _nb)
   {
     // store necessary variables
-    this->m = m;
-    this->ml = ml;
-    this->mh = mh;
-    this->nc = nc;
-    this->nb = nb;
+    this->m = _m;
+    this->ml = _ml;
+    this->mh = _mh;
+    this->nc = _nc;
+    this->nb = _nb;
 
     // create work variables
-    cn = new dReal[nc];
-    ct1 = new dReal[nc];
-    ct2 = new dReal[nc];
-    cv = new dReal[m];
-    cl = new dReal[ml];
-    ch = new dReal[mh];
-    Nv = new dReal[nc];
-    Mv = new dReal[nb*6];
-    vnp1 = new dReal[nb*6];
-    worknb6 = new dReal[nb*6];
-    worknb6_2 = new dReal[nb*6];
-    Jlv = new dReal[ml];
-    Jhv = new dReal[mh];
-    stack1 = new dReal[(nc + m + ml + mh)*nb*6];
-    stack2 = new dReal[(nc*3 + m + ml + mh)*nb*6];
-    NStack = new dReal[nc * (nc*3 + m + ml + mh)];
+    cn = new dReal[_nc];
+    ct1 = new dReal[_nc];
+    ct2 = new dReal[_nc];
+    cv = new dReal[_m];
+    cl = new dReal[_ml];
+    ch = new dReal[_mh];
+    Nv = new dReal[_nc];
+    Mv = new dReal[_nb*6];
+    vnp1 = new dReal[_nb*6];
+    worknb6 = new dReal[_nb*6];
+    worknb6_2 = new dReal[_nb*6];
+    Jlv = new dReal[_ml];
+    Jhv = new dReal[_mh];
+    stack1 = new dReal[(_nc + _m + _ml + _mh)*_nb*6];
+    stack2 = new dReal[(_nc*3 + _m + _ml + _mh)*_nb*6];
+    NStack = new dReal[_nc * (_nc*3 + _m + _ml + _mh)];
   }
 
   ~COptData()
@@ -276,10 +276,11 @@ static void det_orthonormal_vec(dReal* dir, dReal* v)
 } 
 
 // verifies that all elements of a vector are finite (for debugging/testing)
-static void verifyFinite(dReal* A, int n)
+static void verifyFinite(dReal* /*A*/, int /*n*/)
 {
-  for (int i=0; i< n; i++)
+  /*for (int i=0; i< n; i++)
     dIASSERT(!isnan(A[i]) && !isinf(A[i]));
+    */
 }
 
 // multiplies a nr x (nb*6) matrix (N, T1, or T2) by a (nb*6) x nc matrix
@@ -1144,7 +1145,7 @@ static void formXiMXT(shared_array<dReal>& XMXT, dReal* X, int nb, int n, dReal*
 //****************************************************************************
 // convex optimization objective / constraint functions (phase I) 
 //****************************************************************************
-static void copt_fx1(dReal* x, int n, dReal* f, int m, void* data)
+static void copt_fx1(dReal* x, int /*n*/, dReal* f, int /*m*/, void* data)
 {
   COptData& cd = *((COptData*) data);
   const dReal S_BUFFER = dSqrt(std::numeric_limits<dReal>::epsilon());
@@ -1213,7 +1214,7 @@ dIASSERT(!isnan(f[0]));
 //****************************************************************************
 // convex optimization objective / constraint functions (phase II) 
 //****************************************************************************
-static void copt_fx2(dReal* x, int n, dReal* f, int m, void* data)
+static void copt_fx2(dReal* x, int /*n*/, dReal* f, int /*m*/, void* data)
 {
   COptData& cd = *((COptData*) data);
   const dReal S_BUFFER = dSqrt(std::numeric_limits<dReal>::epsilon());

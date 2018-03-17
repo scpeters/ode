@@ -258,24 +258,24 @@ struct FeasibilityData
   void (*grad)(dReal*, int, int, dReal*, void*);
   bool (*hess)(dReal*, int, int, dReal*, void*);
 
-  FeasibilityData(int m, int n)
+  FeasibilityData(int _m, int _n)
   {
-    this->m = m;
-    this->n = n;
-    workn = new dReal[n];
-    workm = new dReal[m+1];
-    worknxn = new dReal[n*n];
+    this->m = _m;
+    this->n = _n;
+    workn = new dReal[_n];
+    workm = new dReal[_m+1];
+    worknxn = new dReal[_n*_n];
   }
 
   ~FeasibilityData() { delete [] workm; delete [] workn; delete [] worknxn; }
 };
 
 // checks to see whether we can terminate early
-static bool make_feasible_tcheck(dReal* y, int n, void* data)
+static bool make_feasible_tcheck(dReal* y, int /*n*/, void* data)
 {
   // get the feasibility data
   FeasibilityData& fdata = *((FeasibilityData*) data);
-  dIASSERT(n == fdata.n+1);
+  //dIASSERT(n == fdata.n+1);
   const int OLDN = fdata.n;
   const int OLDM = fdata.m;
 
@@ -291,11 +291,11 @@ static bool make_feasible_tcheck(dReal* y, int n, void* data)
 }
 
 // evaluation function for making an initial point feasible
-static void make_feasible_fx(dReal* y, int n, dReal* f, int m, void* data)
+static void make_feasible_fx(dReal* y, int /*n*/, dReal* f, int /*m*/, void* data)
 {
   // get the feasibility data
   FeasibilityData& fdata = *((FeasibilityData*) data);
-  dIASSERT(n == fdata.n+1);
+  //dIASSERT(n == fdata.n+1);
   const int OLDN = fdata.n;
   const int OLDM = fdata.m;
 
@@ -377,7 +377,7 @@ static bool make_feasible_hess(dReal* y, int n, int idx, dReal* H, void* data)
 }
 
 // Hessian function for solving convex LCPs
-static bool lcp_ip_hess(dReal* x, int n, int idx, dReal* H, void* data)
+static bool lcp_ip_hess(dReal* /*x*/, int n, int idx, dReal* H, void* data)
 {
   // get the LCP data
   const LCPData& lcpdata = *((LCPData*) data);
@@ -433,7 +433,7 @@ static void lcp_ip_grad(dReal* x, int n, int idx, dReal* g, void* data)
 }
 
 // objective / constraint evaluation function for solving convex LCPs
-static void lcp_ip_fx(dReal* x, int n, dReal* f, int m, void* data)
+static void lcp_ip_fx(dReal* x, int n, dReal* f, int /*m*/, void* data)
 {
   const dReal S_BUFFER = std::numeric_limits<dReal>::epsilon();
 
@@ -456,14 +456,14 @@ static void lcp_ip_fx(dReal* x, int n, dReal* f, int m, void* data)
   // evaluate the x >= 0 constraint functions
   int fidx = 1;
   for (int i=0; i< n; i++)
-    if (x[i] != (dReal) 0.0)
+    if (!_dequal(x[i], (dReal) 0.0))
       f[fidx++] = -x[i];
     else
       f[fidx++] = -S_BUFFER;
 
   // evaluate the w >= 0 constraint functions
   for (int i=0; i< n; i++)
-    if (work[i] != (dReal) 0.0)
+    if (!_dequal(work[i], (dReal) 0.0))
       f[fidx++] = -work[i];
     else
       f[fidx++] = -S_BUFFER;
@@ -659,7 +659,7 @@ bool dOptimizeConvexPrimalDual(CvxOptParams& cparams, dReal eps_feas, dReal* x, 
   // verify that f is non-positive for constraint functions
   shared_array<dReal> fc(new dReal[m]);
   memcpy(fc.get(), f.get()+1, sizeof(dReal)*m);
-  dReal maxfc = *std::max_element(fc.get(), fc.get()+m);
+  //dReal maxfc = *std::max_element(fc.get(), fc.get()+m);
   dUASSERT(maxfc <= 0.0, "initial point infeasible");
 
   // setup lambda: must be greater than zero

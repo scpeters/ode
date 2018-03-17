@@ -123,6 +123,8 @@ void dxJointBall::set( int num, dReal value )
     case dParamERP:
         erp = value;
         break;
+    default:
+        break;
     }
 }
 

@@ -505,6 +505,8 @@ void dxJointLimitMotor::set( int num, dReal value )
     case dParamStopCFM:
         stop_cfm = value;
         break;
+    default:
+        break;
     }
 }
 
@@ -613,7 +615,7 @@ int dxJointLimitMotor::addLimot( dxJoint *joint,
 
         // if we're limited low and high simultaneously, the joint motor is
         // ineffective
-        if ( limit && ( lostop == histop ) ) powered = 0;
+        if ( limit && ( _dequal(lostop, histop) ) ) powered = 0;
 
         if ( powered )
         {
@@ -636,7 +638,7 @@ int dxJointLimitMotor::addLimot( dxJoint *joint,
                 // a fudge factor.
 
                 dReal fm = fmax;
-                if (( vel > 0 ) || ( vel == 0 && limit == 2 ) ) fm = -fm;
+                if (( vel > 0 ) || ( _dequal(vel, 0.0) && limit == 2 ) ) fm = -fm;
 
                 // if we're powering away from the limit, apply the fudge factor
                 if (( limit == 1 && vel > 0 ) || ( limit == 2 && vel < 0 ) ) fm *= fudge_factor;
@@ -671,7 +673,7 @@ int dxJointLimitMotor::addLimot( dxJoint *joint,
             info->c[row] = -k * limit_err;
             info->cfm[row] = stop_cfm;
 
-            if ( lostop == histop )
+            if ( _dequal(lostop, histop) )
             {
                 // limited low and high simultaneously
                 info->lo[row] = -dInfinity;
@@ -696,18 +698,18 @@ int dxJointLimitMotor::addLimot( dxJoint *joint,
                 if ( bounce > 0 )
                 {
                     // calculate joint velocity
-                    dReal vel;
+                    dReal vvel;
                     if ( rotational )
                     {
-                        vel = dCalcVectorDot3( joint->node[0].body->avel, ax1 );
+                        vvel = dCalcVectorDot3( joint->node[0].body->avel, ax1 );
                         if ( joint->node[1].body )
-                            vel -= dCalcVectorDot3( joint->node[1].body->avel, ax1 );
+                            vvel -= dCalcVectorDot3( joint->node[1].body->avel, ax1 );
                     }
                     else
                     {
-                        vel = dCalcVectorDot3( joint->node[0].body->lvel, ax1 );
+                        vvel = dCalcVectorDot3( joint->node[0].body->lvel, ax1 );
                         if ( joint->node[1].body )
-                            vel -= dCalcVectorDot3( joint->node[1].body->lvel, ax1 );
+                            vvel -= dCalcVectorDot3( joint->node[1].body->lvel, ax1 );
                     }
 
                     // only apply bounce if the velocity is incoming, and if the
@@ -717,16 +719,16 @@ int dxJointLimitMotor::addLimot( dxJoint *joint,
                         // low limit
                         if ( vel < 0 )
                         {
-                            dReal newc = -bounce * vel;
+                            dReal newc = -bounce * vvel;
                             if ( newc > info->c[row] ) info->c[row] = newc;
                         }
                     }
                     else
                     {
                         // high limit - all those computations are reversed
-                        if ( vel > 0 )
+                        if ( vvel > 0 )
                         {
-                            dReal newc = -bounce * vel;
+                            dReal newc = -bounce * vvel;
                             if ( newc < info->c[row] ) info->c[row] = newc;
                         }
                     }

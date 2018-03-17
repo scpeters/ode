@@ -793,8 +793,8 @@ void dBodySetFiniteRotationMode (dBodyID b, int mode)
   b->flags &= ~(dxBodyFlagFiniteRotation | dxBodyFlagFiniteRotationAxis);
   if (mode) {
     b->flags |= dxBodyFlagFiniteRotation;
-    if (b->finite_rot_axis[0] != 0 || b->finite_rot_axis[1] != 0 ||
-	b->finite_rot_axis[2] != 0) {
+    if (!_dequal(b->finite_rot_axis[0], 0.0) || !_dequal(b->finite_rot_axis[1], 0.0) ||
+	!_dequal(b->finite_rot_axis[2], 0.0)) {
       b->flags |= dxBodyFlagFiniteRotationAxis;
     }
   }
@@ -869,7 +869,7 @@ void dBodySetKinematic (dBodyID b)
 int dBodyIsKinematic (dBodyID b)
 {
   dAASSERT (b);
-  return b->invMass == 0;
+  return _dequal(b->invMass, 0.0);
 }
 
 void dBodyEnable (dBodyID b)
@@ -1055,7 +1055,7 @@ dReal dBodyGetLinearDamping(dBodyID b)
 void dBodySetLinearDamping(dBodyID b, dReal scale)
 {
         dAASSERT(b);
-        if (scale)
+        if (!_dequal(scale, 0.0))
                 b->flags |= dxBodyLinearDamping;
         else
                 b->flags &= ~dxBodyLinearDamping;
@@ -1071,7 +1071,7 @@ dReal dBodyGetAngularDamping(dBodyID b)
 void dBodySetAngularDamping(dBodyID b, dReal scale)
 {
         dAASSERT(b);
-        if (scale)
+        if (!_dequal(scale, 0.0))
                 b->flags |= dxBodyAngularDamping;
         else
                 b->flags &= ~dxBodyAngularDamping;
@@ -1506,7 +1506,7 @@ void dJointSetDamping (dxJoint *joint, dReal damping)
   if (joint->type() == dJointTypeHinge || joint->type() == dJointTypeSlider || 
       joint->type() == dJointTypeScrew)
   {
-    if (damping != 0.0)
+    if (!_dequal(damping, 0.0))
     {
       if (damping < 0.0) printf("bad to have negative viscous joint damping, make sure you know what's going on.\n");
       // set use_damping to true
@@ -2080,7 +2080,7 @@ dReal dWorldGetLinearDamping(dWorldID w)
 void dWorldSetLinearDamping(dWorldID w, dReal scale)
 {
         dAASSERT(w);
-        if (scale)
+        if (!_dequal(scale, 0.0))
                 w->body_flags |= dxBodyLinearDamping;
         else
                 w->body_flags &= ~dxBodyLinearDamping;
@@ -2096,7 +2096,7 @@ dReal dWorldGetAngularDamping(dWorldID w)
 void dWorldSetAngularDamping(dWorldID w, dReal scale)
 {
         dAASSERT(w);
-        if (scale)
+        if (!_dequal(scale, 0.0))
                 w->body_flags |= dxBodyAngularDamping;
         else
                 w->body_flags &= ~dxBodyAngularDamping;

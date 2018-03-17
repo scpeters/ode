@@ -112,6 +112,7 @@ rows/columns and manipulate C.
 #include <ode/matrix.h>
 #include <ode/misc.h>
 #include <ode/timer.h>		// for testing
+#include <ode/odemath.h>
 #include "config.h"
 #include "lcp.h"
 #include "mat.h"		// for testing
@@ -465,7 +466,7 @@ dLCP::dLCP (int _n, int _nskip, int _nub, dReal *_Adata, dReal *_x, dReal *_b, d
     const int n = m_n;
     for (int k = m_nub; k<n; ++k) {
       if (findex && findex[k] >= 0) continue;
-      if (lo[k]==-dInfinity && hi[k]==dInfinity) {
+      if (_dequal(lo[k], -dInfinity) && _dequal(hi[k], dInfinity)) {
         swapProblem (m_A,m_x,m_b,m_w,lo,hi,m_p,m_state,findex,n,m_nub,k,m_nskip,0);
         m_nub++;
       }
@@ -742,14 +743,14 @@ void dLCP::solve1 (dReal *a, int i, int dir, int only_transfer)
       dSolveL1T (m_L,tmp,m_nC,m_nskip);
       if (dir > 0) {
         int *C = m_C;
-        dReal *tmp = m_tmp;
+        dReal *tmp2 = m_tmp;
         const int nC = m_nC;
-        for (int j=0; j<nC; ++j) a[C[j]] = -tmp[j];
+        for (int j=0; j<nC; ++j) a[C[j]] = -tmp2[j];
       } else {
         int *C = m_C;
-        dReal *tmp = m_tmp;
+        dReal *tmp2 = m_tmp;
         const int nC = m_nC;
-        for (int j=0; j<nC; ++j) a[C[j]] = tmp[j];
+        for (int j=0; j<nC; ++j) a[C[j]] = tmp2[j];
       }
     }
   }
@@ -863,7 +864,7 @@ void dSolveLCP (dxWorldProcessContext *context, int n, dReal *A, dReal *x, dReal
       // set lo and hi values
       for (int k=i; k<n; ++k) {
         dReal wfk = delta_w[findex[k]];
-        if (wfk == 0) {
+        if (_dequal(wfk, 0.0)) {
           hi[k] = 0;
           lo[k] = 0;
         }
@@ -890,15 +891,15 @@ void dSolveLCP (dxWorldProcessContext *context, int n, dReal *A, dReal *x, dReal
     // these indexes may be incorrect, but that doesn't matter.
 
     // see if x(i),w(i) is in a valid region
-    if (lo[i]==0 && w[i] >= 0) {
+    if (_dequal(lo[i], 0.0) && w[i] >= 0) {
       lcp.transfer_i_to_N (i);
       state[i] = false;
     }
-    else if (hi[i]==0 && w[i] <= 0) {
+    else if (_dequal(hi[i], 0.0) && w[i] <= 0) {
       lcp.transfer_i_to_N (i);
       state[i] = true;
     }
-    else if (w[i]==0) {
+    else if (_dequal(w[i], 0.0)) {
       // this is a degenerate case. by the time we get to this test we know
       // that lo != 0, which means that lo < 0 as lo is not allowed to be +ve,
       // and similarly that hi > 0. this means that the line segment
@@ -966,7 +967,7 @@ void dSolveLCP (dxWorldProcessContext *context, int n, dReal *A, dReal *x, dReal
             const int indexN_k = lcp.indexN(k);
             if (!state[indexN_k] ? delta_w[indexN_k] < 0 : delta_w[indexN_k] > 0) {
                 // don't bother checking if lo=hi=0
-                if (lo[indexN_k] == 0 && hi[indexN_k] == 0) continue;
+                if (_dequal(lo[indexN_k], 0.0) && _dequal(hi[indexN_k], 0.0)) continue;
                 dReal s2 = -w[indexN_k] / delta_w[indexN_k];
                 if (s2 < s) {
                   s = s2;
@@ -1057,6 +1058,8 @@ void dSolveLCP (dxWorldProcessContext *context, int n, dReal *A, dReal *x, dReal
           state[si] = true;
           tmpbuf = context->PeekBufferRemainder();
           lcp.transfer_i_from_C_to_N (si, tmpbuf);
+          break;
+        default:
           break;
         }
 
@@ -1215,13 +1218,13 @@ extern "C" ODE_API int dTestSolveLCP()
       if (diff > tol) dDebug (0,"A*x = b+w, maximum difference = %.6e",diff);
       int n1=0,n2=0,n3=0;
       for (i=0; i<n; i++) {
-        if (x[i]==lo[i] && w[i] >= 0) {
+        if (_dequal(x[i], lo[i]) && w[i] >= 0) {
           n1++;	// ok
         }
-        else if (x[i]==hi[i] && w[i] <= 0) {
+        else if (_dequal(x[i], hi[i]) && w[i] <= 0) {
           n2++;	// ok
         }
-        else if (x[i] >= lo[i] && x[i] <= hi[i] && w[i] == 0) {
+        else if (x[i] >= lo[i] && x[i] <= hi[i] && _dequal(w[i], 0.0)) {
           n3++;	// ok
         }
         else {

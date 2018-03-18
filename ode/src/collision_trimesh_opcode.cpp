@@ -793,6 +793,8 @@ void dGeomTriMeshEnableTC(dGeomID g, int geomClass, int enable)
 		case dCapsuleClass:
 			((dxTriMesh*)g)->doCapsuleTC = (1 == enable);
 			break;
+		default:
+			break;
 	}
 }
 
@@ -813,6 +815,8 @@ int dGeomTriMeshIsTCEnabled(dGeomID g, int geomClass)
 		case dCapsuleClass:
 			if (((dxTriMesh*)g)->doCapsuleTC)
 				return 1;
+			break;
+		default:
 			break;
 	}
 	return 0;

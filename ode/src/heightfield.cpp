@@ -224,6 +224,8 @@ void dxHeightfieldData::ComputeHeightBounds()
 
         break;
 
+    default:
+        break;
     }
 
     // scale and offset
@@ -355,6 +357,8 @@ dReal dxHeightfieldData::GetHeight( int x, int z )
         data_double = (double*)m_pHeightData;
         h = (dReal)( data_double[x+(z * m_nWidthSamples)] );
         break;
+    default:
+        break;
     }
 
     return (h * m_fScale) + m_fOffset;
@@ -442,6 +446,8 @@ dxHeightfieldData::~dxHeightfieldData()
             data_double = (double*)m_pHeightData;
             delete [] data_double;
             break;
+        default:
+            break;
 
         }
     }
@@ -484,7 +490,7 @@ void dxHeightfield::computeAABB()
             dReal dx[6], dy[6], dz[6];
 
             // Y-axis
-            if (d->m_fMinHeight != -dInfinity)
+            if (!_dequal(d->m_fMinHeight, -dInfinity))
             {
                 dy[0] = ( final_posr->R[ 1] * d->m_fMinHeight );
                 dy[1] = ( final_posr->R[ 5] * d->m_fMinHeight );
@@ -493,12 +499,12 @@ void dxHeightfield::computeAABB()
             else
             {
                 // Multiplication is performed to obtain infinity of correct sign
-                dy[0] = ( final_posr->R[ 1] ? final_posr->R[ 1] * -dInfinity : REAL(0.0) );
-                dy[1] = ( final_posr->R[ 5] ? final_posr->R[ 5] * -dInfinity : REAL(0.0) );
-                dy[2] = ( final_posr->R[ 9] ? final_posr->R[ 9] * -dInfinity : REAL(0.0) );
+                dy[0] = ( !_dequal(final_posr->R[ 1], 0.0) ? final_posr->R[ 1] * -dInfinity : REAL(0.0) );
+                dy[1] = ( !_dequal(final_posr->R[ 5], 0.0) ? final_posr->R[ 5] * -dInfinity : REAL(0.0) );
+                dy[2] = ( !_dequal(final_posr->R[ 9], 0.0) ? final_posr->R[ 9] * -dInfinity : REAL(0.0) );
             }
 
-            if (d->m_fMaxHeight != dInfinity)
+            if (!_dequal(d->m_fMaxHeight, dInfinity))
             {
                 dy[3] = ( final_posr->R[ 1] * d->m_fMaxHeight );
                 dy[4] = ( final_posr->R[ 5] * d->m_fMaxHeight );
@@ -506,9 +512,9 @@ void dxHeightfield::computeAABB()
             }
             else
             {
-                dy[3] = ( final_posr->R[ 1] ? final_posr->R[ 1] * dInfinity : REAL(0.0) );
-                dy[4] = ( final_posr->R[ 5] ? final_posr->R[ 5] * dInfinity : REAL(0.0) );
-                dy[5] = ( final_posr->R[ 9] ? final_posr->R[ 9] * dInfinity : REAL(0.0) );
+                dy[3] = ( !_dequal(final_posr->R[ 1], 0.0) ? final_posr->R[ 1] * dInfinity : REAL(0.0) );
+                dy[4] = ( !_dequal(final_posr->R[ 5], 0.0) ? final_posr->R[ 5] * dInfinity : REAL(0.0) );
+                dy[5] = ( !_dequal(final_posr->R[ 9], 0.0) ? final_posr->R[ 9] * dInfinity : REAL(0.0) );
             }
 
 #ifdef DHEIGHTFIELD_CORNER_ORIGIN

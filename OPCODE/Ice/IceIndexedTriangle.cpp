@@ -79,7 +79,7 @@ float IndexedTriangle::Compacity(const Point* verts) const
 {
 	if(!verts)	return 0.0f;
 	float P = Perimeter(verts);
-	if(P==0.0f)	return 0.0f;
+	if(_equal(P, 0.0f))	return 0.0f;
 	return (4.0f*PI*Area(verts)/(P*P));
 }
 
@@ -485,7 +485,7 @@ void IndexedTriangle::ComputePoint(const Point* verts, float u, float v, Point& 
 		float NormU = u.Magnitude();	// |u|
 		float NormV = v.Magnitude();	// |v|
 		float Product = NormU*NormV;	// |u||v|
-		if(Product==0.0f)	return 0.0f;
+		if(_equal(Product, 0.0f))	return 0.0f;
 		float OneOverProduct = 1.0f / Product;
 
 		// Cosinus

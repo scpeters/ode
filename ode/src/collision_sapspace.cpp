@@ -34,6 +34,7 @@
  */
 
 #include <ode/common.h>
+#include <ode/odemath.h>
 #include <ode/matrix.h>
 #include <ode/collision_space.h>
 #include <ode/collision.h>
@@ -443,7 +444,7 @@ void dxSAPSpace::collide( void *data, dNearCallback *callback )
 		if( !GEOM_ENABLED(g) ) // skip disabled ones
 			continue;
 		const dReal& amax = g->aabb[axis0max];
-		if( amax == dInfinity ) // HACK? probably not...
+		if( _dequal(amax, dInfinity )) // HACK? probably not...
 			TmpInfGeomList.push( g );
 		else
 			TmpGeomList.push( g );

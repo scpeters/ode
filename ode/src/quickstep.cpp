@@ -400,7 +400,7 @@ void computeRHSPrecon(dxWorldProcessContext *context, const int m, const int nb,
     /*                                                                                  */
     /*               compute preconditioned rhs                                         */
     /*                                                                                  */
-    /*  J J' lambda = J * ( M * dv / h + fe )                                           */
+    /*  J J' lambda = J * ( M * dv / dt + fe )                                          */
     /*                                                                                  */
     /************************************************************************************/
     // mimic computation of rhs, but do it with J*M*inv(J) prefixed for preconditioned case.
@@ -479,11 +479,11 @@ static inline void sum6(dRealMutablePtr a, dReal delta, dRealPtr b)
 }
 
 static void ComputeRows(
-                int thread_id,
+                int /*thread_id*/,
                 IndexError* order,
-                dxBody* const *body,
+                dxBody* const * /*body*/,
                 dxSORLCPParameters params,
-                boost::recursive_mutex* mutex)
+                boost::recursive_mutex* /*mutex*/)
 {
 
   #ifdef REPORT_THREAD_TIMING
@@ -1515,8 +1515,8 @@ void dxQuickStepper (dxWorldProcessContext *context,
       // complete rhs
       for (int i=0; i<m; i++) {
         rhs_erp[i] =      c[i]*stepsize1 - rhs[i];
-        if (dFabs(c[i]) > world->contactp.max_vel)
-          rhs[i]   = c_v_max[i]*stepsize1 - rhs[i];
+        if (dFabs(c[i]) > c_v_max[i])
+          rhs[i]   =  - rhs[i];
         else
           rhs[i]   = c[i]*stepsize1 - rhs[i];
       }
@@ -1776,7 +1776,7 @@ static size_t EstimateSOR_LCPMemoryRequirements(int m,int nb)
 }
 
 size_t dxEstimateQuickStepMemoryRequirements (
-  dxBody * const *body, int nb, dxJoint * const *_joint, int _nj)
+  dxBody * const * /*body*/, int nb, dxJoint * const *_joint, int _nj)
 {
   int nj, m, mfb;
 

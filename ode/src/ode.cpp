@@ -807,7 +807,7 @@ void dBodySetFiniteRotationAxis (dBodyID b, dReal x, dReal y, dReal z)
   b->finite_rot_axis[0] = x;
   b->finite_rot_axis[1] = y;
   b->finite_rot_axis[2] = z;
-  if (x != 0 || y != 0 || z != 0) {
+  if (!_dequal(x, 0.0) || !_dequal(y, 0.0) || !_dequal(z, 0.0)) {
     dNormalize3 (b->finite_rot_axis);
     b->flags |= dxBodyFlagFiniteRotationAxis;
   }

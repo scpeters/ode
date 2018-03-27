@@ -49,6 +49,9 @@ dReal dJointGetSliderPosition ( dJointID j )
 
     // get axis1 in global coordinates
     dVector3 ax1, q;
+    if (!joint->node[0].body)
+      return 0;
+
     dMultiply0_331 ( ax1, joint->node[0].body->posr.R, joint->axis1 );
 
     if ( joint->node[1].body )

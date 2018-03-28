@@ -1309,6 +1309,19 @@ dxJoint * dJointCreatePlane2D (dWorldID w, dJointGroupID group)
     return createJoint<dxJointPlane2D> (w,group);
 }
 
+dxJoint * dJointCreateDBall (dWorldID w, dJointGroupID group)
+{
+    dAASSERT (w);
+    return createJoint<dxJointDBall> (w,group);
+}
+
+dxJoint * dJointCreateDHinge (dWorldID w, dJointGroupID group)
+{
+    dAASSERT (w);
+    return createJoint<dxJointDHinge> (w,group);
+}
+
+
 void dJointDestroy (dxJoint *j)
 {
     dAASSERT (j);

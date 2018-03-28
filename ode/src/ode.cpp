@@ -1321,6 +1321,12 @@ dxJoint * dJointCreateDHinge (dWorldID w, dJointGroupID group)
     return createJoint<dxJointDHinge> (w,group);
 }
 
+dxJoint * dJointCreateGearbox (dWorldID w, dJointGroupID group)
+{
+    dAASSERT (w);
+    return createJoint<dxJointGearbox> (w,group);
+}
+
 
 void dJointDestroy (dxJoint *j)
 {

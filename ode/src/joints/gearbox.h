@@ -20,24 +20,26 @@
  *                                                                       *
  *************************************************************************/
 
-#ifndef _ODE_JOINT_DHINGE_
-#define _ODE_JOINT_DHINGE_
+#ifndef _ODE_JOINT_GEARBOX_
+#define _ODE_JOINT_GEARBOX_
 
-#include "dball.h"
+#include "dhinge.h"
 
-struct dxJointDHinge : public dxJointDBall 
+struct dxJointGearbox : public dxJointDHinge 
 {
     dVector3 axis1, axis2;
+    dReal ratio;        // gearbox ratio
+    dReal erp;          // error reduction
+    dReal cfm;          // constraint force mix in
     
-    dxJointDHinge(dxWorld *w);
+    dxJointGearbox(dxWorld *w);
 
     virtual void getSureMaxInfo( SureMaxInfo* info );
     virtual void getInfo1( Info1* info );
-    virtual void getInfo2( dReal worldFPS, dReal worldERP, const Info2* info );
+    virtual void getInfo2( Info2* info );
     virtual dJointType type() const;
     virtual size_t size() const;
 
 };
-
 
 #endif

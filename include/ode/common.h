@@ -260,6 +260,7 @@ typedef enum {
   dJointTypePiston,
   dJointTypeDBall,
   dJointTypeDHinge,
+  dJointTypeGearbox
 } dJointType;
 
 

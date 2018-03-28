@@ -1660,6 +1660,14 @@ ODE_API dJointID dJointCreateBall (dWorldID, dJointGroupID);
 ODE_API dJointID dJointCreateHinge (dWorldID, dJointGroupID);
 
 /**
+ * @brief Create a new joint of the gearbox type.
+ * @ingroup joints
+ * @param dJointGroupID set to 0 to allocate the joint normally.
+ * If it is nonzero the joint is allocated in the given joint group.
+ */
+ODE_API dJointID dJointCreateGearbox (dWorldID, dJointGroupID);
+
+/**
  * @brief Create a new joint of the slider type.
  * @ingroup joints
  * @param dJointGroupID set to 0 to allocate the joint normally.
@@ -2062,6 +2070,28 @@ ODE_API void dJointSetScrewParam (dJointID, int parameter, dReal value);
  */
 ODE_API void dJointAddScrewForce(dJointID joint, dReal force);
 ODE_API void dJointAddScrewTorque(dJointID joint, dReal torque);
+
+/**
+ * @brief set first axis for the gearbox joint
+ * @remarks This is the axis around which the first body is allowed to
+ * revolve and is attached to it.  It is given in global coordinates.
+ * @ingroup joints
+ */
+ODE_API void dJointSetGearboxAxis1(dJointID, dReal x, dReal y, dReal z);
+
+/**
+ * @brief get first axis for the gearbox joint
+ * @ingroup joints
+ */
+ODE_API void dJointGetGearboxAxis1(dJointID, dVector3 result);
+
+/**
+ * @brief set second axis for the gearbox joint
+ * @remarks This is the axis around which the second body is allowed to
+ * revolve and is attached to it.  It is given in global coordinates.
+ * @ingroup joints
+ */
+ODE_API void dJointSetGearboxAxis2(dJointID, dReal x, dReal y, dReal z);
 
 /**
  * @brief set anchor
@@ -2662,6 +2692,42 @@ ODE_API void dJointGetScrewAxis (dJointID, dVector3 result);
  * @ingroup joints
  */
 ODE_API dReal dJointGetScrewParam (dJointID, int parameter);
+
+/**
+ * @brief get second axis for the gearbox joint
+ * @ingroup joints
+ */
+ODE_API void dJointGetGearboxAxis2(dJointID, dVector3 result);
+
+/**
+ * @brief set gearbox joint parameter
+ * @ingroup joints
+ */
+ODE_API void dJointSetGearboxParam(dJointID, int parameter, dReal value);
+
+/**
+ * @brief get gearbox joint parameter
+ * @ingroup joints
+ */
+ODE_API dReal dJointGetGearboxParam(dJointID, int parameter);
+
+/**
+ * @brief set gearbox ratio
+ * @remarks
+ * This is the ratio of the angular velocity of the first body to that
+ * of the second body along the joint axis.  If the ratio is N then
+ * the first body is constrained to rotate N times faster than the
+ * second body.  Set it to 1 / N or reverse the bodies for the reverse
+ * effect.
+ * @ingroup joints
+ */
+ODE_API void dJointSetGearboxRatio( dJointID j, dReal value );
+
+/**
+ * @brief get gearbox ratio
+ * @ingroup joints
+ */
+ODE_API dReal dJointGetGearboxRatio( dJointID j );
 
 /**
  * @brief Get the joint anchor point, in world coordinates.

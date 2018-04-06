@@ -99,6 +99,7 @@ void dRFrom2Axes (dMatrix3 R, dReal ax, dReal ay, dReal az,
   l = dSqrt (ax*ax + ay*ay + az*az);
   if (l <= REAL(0.0)) {
     dDEBUGMSG ("zero length vector");
+    memset(R, 0, sizeof(dReal)*12);
     return;
   }
   l = dRecip(l);
@@ -111,6 +112,7 @@ void dRFrom2Axes (dMatrix3 R, dReal ax, dReal ay, dReal az,
   bz -= k*az;
   l = dSqrt (bx*bx + by*by + bz*bz);
   if (l <= REAL(0.0)) {
+    memset(R, 0, sizeof(dReal)*12);
     dDEBUGMSG ("zero length vector");
     return;
   }
